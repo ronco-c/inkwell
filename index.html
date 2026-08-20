@@ -23,8 +23,10 @@
 
 <style>
   body{margin:0;background:var(--color-bg)}
-  .nb{font-family:var(--font-body)}
+  .nb{font-family:var(--font-body);-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;-webkit-user-drag:none}
   .nb input{font-family:var(--font-body)}
+  .nb input,.nb textarea{-webkit-user-select:text;user-select:text}
+  .nb canvas{-webkit-user-drag:none;-webkit-touch-callout:none}
   a{color:var(--color-accent-700)}
   a:hover{color:var(--color-accent)}
 </style>
@@ -925,6 +927,40 @@ class Component extends DCLogic {
       const pages = n.pages.map((pg, k) => k === i ? [...pg, s] : pg);
       return { ...n, pages: grow ? [...pages, []] : pages };
     });
+    if (this.looksLikeStraightLine(s.pts)) this.scheduleStraighten(note.id, i, s);
+  }
+  // A stroke "looks like" an intended straight line when it's reasonably long and its drawn
+  // path barely wanders from the direct start-to-end distance (a steady, deliberate drag).
+  looksLikeStraightLine(pts) {
+    if (!pts || pts.length < 3) return false;
+    const a = pts[0], b = pts[pts.length - 1];
+    const straightDist = Math.hypot(b[0] - a[0], b[1] - a[1]);
+    if (straightDist < 90) return false;
+    let pathLen = 0;
+    for (let k = 1; k < pts.length; k++) pathLen += Math.hypot(pts[k][0] - pts[k - 1][0], pts[k][1] - pts[k - 1][1]);
+    return pathLen / straightDist < 1.06;
+  }
+  // Waits a beat, then — if that exact stroke is still there, untouched — replaces it with a
+  // perfectly straight segment between its original start and end points.
+  scheduleStraighten(noteId, pageIdx, strokeRef) {
+    setTimeout(() => {
+      let changed = false;
+      const subjects = this.state.subjects.map(sub => ({
+        ...sub,
+        notes: sub.notes.map(n => {
+          if (n.id !== noteId || !n.pages[pageIdx]) return n;
+          const pg = n.pages[pageIdx];
+          const idx = pg.indexOf(strokeRef);
+          if (idx === -1) return n;
+          const a = strokeRef.pts[0], b = strokeRef.pts[strokeRef.pts.length - 1];
+          const nextPage = pg.slice();
+          nextPage[idx] = { ...strokeRef, pts: [a, b] };
+          changed = true;
+          return { ...n, pages: n.pages.map((p, k) => k === pageIdx ? nextPage : p) };
+        })
+      }));
+      if (changed) { this.setSubjects(subjects); this.redrawAll(); }
+    }, 1200);
   }
   erase(i, pt) {
     const n = this.note(); if (!n) return;
