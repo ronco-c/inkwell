@@ -23,7 +23,7 @@
 
 <style>
   body{margin:0;background:var(--color-bg)}
-  .nb{font-family:var(--font-body);-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;-webkit-user-drag:none;zoom:1.08}
+  .nb{font-family:var(--font-body);-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;-webkit-user-drag:none}
   .nb input{font-family:var(--font-body)}
   .nb input,.nb textarea{-webkit-user-select:text;user-select:text}
   .nb canvas{-webkit-user-drag:none;-webkit-touch-callout:none}
@@ -31,7 +31,7 @@
   a:hover{color:var(--color-accent)}
 </style>
 </helmet>
-<div class="nb" dir="ltr" style="display:flex;height:calc(100vh / 1.08);overflow:hidden;background:var(--color-bg);color:var(--color-text)">
+<div class="nb" dir="ltr" style="display:flex;height:100vh;overflow:hidden;background:var(--color-bg);color:var(--color-text)">
 
   <sc-if value="{{ inLibrary }}" hint-placeholder-val="{{ true }}">
     <div style="display:flex;width:100%;height:100%">
@@ -1312,7 +1312,19 @@ class Component extends DCLogic {
         selLeft: st.sel ? Math.max(8, st.sel.x0) + 'px' : '0px',
         selCount: st.sel ? st.sel.idxs.length : 0,
         numColor: paper.dark ? 'var(--color-neutral-400)' : 'var(--color-neutral-600)',
-        ref: (el) => { if (el) { this.els[i] = el; this.redrawAll(); } else { delete this.els[i]; } },
+        ref: (el) => {
+          if (el) {
+            this.els[i] = el;
+            // Belt-and-suspenders against a resting palm scrolling the page mid-stroke: this
+            // native listener can actually cancel the browser's pan gesture outright, which is
+            // more reliable on real hardware than only toggling the touch-action CSS property.
+            if (!el.__inkwellTouchGuard) {
+              el.__inkwellTouchGuard = true;
+              el.addEventListener('touchstart', (ev) => { if (this.cur || this.erasing || this.lassoing) ev.preventDefault(); }, { passive: false });
+            }
+            this.redrawAll();
+          } else { delete this.els[i]; }
+        },
         down: (e) => this.down(i, e), move: (e) => this.move(i, e), up: (e) => this.up(e)
       })) : [],
       addPage: () => this.mutateNote(n => ({ ...n, pages: [...n.pages, this.template ? this.template.slice() : []] })),
