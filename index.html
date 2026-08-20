@@ -1,0 +1,1402 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Inkwell</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#f3f2f2">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Inkwell">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" href="icons/icon-192.png">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/classical-91aff22b-dc20-400d-b2ad-93c675836a1e/styles.css">
+<script src="_ds/classical-91aff22b-dc20-400d-b2ad-93c675836a1e/_ds_bundle.js"></script>
+<link rel="preconnect" href="https://fonts.gstatic.com">
+
+<style>
+  body{margin:0;background:var(--color-bg)}
+  .nb{font-family:var(--font-body)}
+  .nb input{font-family:var(--font-body)}
+  a{color:var(--color-accent-700)}
+  a:hover{color:var(--color-accent)}
+</style>
+</helmet>
+<div class="nb" dir="ltr" style="display:flex;height:100vh;overflow:hidden;background:var(--color-bg);color:var(--color-text)">
+
+  <sc-if value="{{ inLibrary }}" hint-placeholder-val="{{ true }}">
+    <div style="display:flex;width:100%;height:100%">
+
+      <aside style="width:308px;flex:none;height:100%;display:flex;flex-direction:column;gap:14px;padding:26px 22px;border-inline-end:1px solid var(--color-divider);background:var(--color-bg);overflow-y:auto">
+        <div style="display:flex;flex-direction:column;gap:2px">
+          <span style="font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--color-neutral-600);font-variant-numeric:tabular-nums">INKWELL · iPad</span>
+          <h3 style="margin:0;font-weight:400;font-size:27px">Inkwell</h3>
+        </div>
+        <input class="input" value="{{ query }}" onChange="{{ onQuery }}" placeholder="Search lessons…" style="width:100%">
+        <div style="display:flex;align-items:baseline;justify-content:space-between;margin-top:6px">
+          <h6 style="margin:0">Subjects</h6>
+          <button class="btn btn-ghost" onClick="{{ startAdd }}" style="padding:2px 9px;font-size:16px;line-height:1">+</button>
+        </div>
+        <div style="height:1px;background:var(--color-divider)"></div>
+        <span style="font-size:11px;line-height:1.4;color:var(--color-neutral-600)">Long-press a subject or a lesson to rename, duplicate or delete.</span>
+        <sc-if value="{{ adding }}" hint-placeholder-val="{{ false }}">
+          <input class="input" value="{{ newName }}" onChange="{{ onNewName }}" onKeyDown="{{ onNewKey }}" placeholder="Subject name, then Enter" style="width:100%">
+        </sc-if>
+        <nav style="display:flex;flex-direction:column;gap:3px">
+          <sc-for list="{{ subjectList }}" as="s" hint-placeholder-count="6">
+            <div style="display:flex;flex-direction:column">
+              <div onPointerDown="{{ s.press }}" onPointerUp="{{ s.release }}" onPointerLeave="{{ s.release }}" onContextMenu="{{ s.context }}" style="display:flex;align-items:center;gap:8px;padding:8px 9px;border:1px solid {{ s.border }};border-radius:var(--radius-md);background:{{ s.bg }};transform:{{ s.scale }};transition:transform .18s ease,background .18s ease">
+                <span style="width:9px;height:9px;flex:none;border-radius:50%;background:{{ s.color }}"></span>
+                <sc-if value="{{ s.renaming }}" hint-placeholder-val="{{ false }}">
+                  <input class="input" value="{{ s.draft }}" onChange="{{ s.onDraft }}" onKeyDown="{{ s.commitKey }}" onBlur="{{ s.commit }}" autoFocus="{{ true }}" style="flex:1;min-width:0;padding:2px 6px;font-size:14px">
+                </sc-if>
+                <sc-if value="{{ s.showName }}" hint-placeholder-val="{{ true }}">
+                  <button onClick="{{ s.open }}" style="flex:1;min-width:0;padding:0;border:0;background:transparent;cursor:pointer;text-align:start;font-family:var(--font-body);font-size:15px;color:var(--color-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ s.name }}</button>
+                </sc-if>
+                <span style="font-size:12px;font-variant-numeric:tabular-nums;color:var(--color-neutral-600)">{{ s.count }}</span>
+              </div>
+            </div>
+          </sc-for>
+        </nav>
+      </aside>
+
+      <main style="flex:1;height:100%;overflow-y:auto;padding:34px 44px 60px">
+        <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:20px">
+          <div>
+            <span style="font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--color-neutral-600)">{{ headKicker }}</span>
+            <h1 style="margin:2px 0 0;font-weight:400;font-size:46px">{{ activeName }}</h1>
+            <p style="margin:6px 0 0;font-size:13px;color:var(--color-neutral-700);font-variant-numeric:tabular-nums">{{ activeMeta }}</p>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <sc-if value="{{ editing }}" hint-placeholder-val="{{ false }}">
+              <button class="btn btn-secondary" onClick="{{ deleteSelected }}" style="font-family:var(--font-heading);color:#b4322a;border-color:#b4322a">{{ deleteLabel }}</button>
+            </sc-if>
+            <button class="btn btn-ghost" onClick="{{ toggleEdit }}" style="font-family:var(--font-heading)">{{ editLabel }}</button>
+            <button class="btn btn-primary" onClick="{{ newNote }}" style="font-family:var(--font-heading)">+ New lesson</button>
+          </div>
+        </div>
+        <div style="height:1px;background:var(--color-divider);margin:24px 0 30px"></div>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(232px,1fr));gap:30px">
+          <sc-for list="{{ notes }}" as="n" hint-placeholder-count="4">
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <button onClick="{{ n.click }}" onPointerDown="{{ n.press }}" onPointerUp="{{ n.release }}" onPointerLeave="{{ n.release }}" onContextMenu="{{ n.context }}" style="position:relative;transform:{{ n.scale }};transition:transform .18s ease,border-color .18s ease;display:block;padding:0;border:1px solid {{ n.cardBorder }};border-radius:var(--radius-md);background:#fbfaf8;overflow:hidden;cursor:pointer;box-shadow:var(--shadow-sm);aspect-ratio:820/620" style-hover="border-color:var(--color-accent-400);box-shadow:var(--shadow-md)">
+                <svg viewBox="0 0 820 620" width="100%" height="100%" style="display:block;background-color:{{ n.paperBg }};background-image:{{ n.paperImage }};background-size:{{ n.paperSize }}">
+                  <sc-for list="{{ n.paths }}" as="p" hint-placeholder-count="0">
+                    <path d="{{ p.d }}" stroke="{{ p.color }}" stroke-width="{{ p.w }}" stroke-linecap="round" fill="none" opacity="{{ p.o }}"></path>
+                  </sc-for>
+                </svg>
+                <sc-if value="{{ editing }}" hint-placeholder-val="{{ false }}">
+                  <span style="position:absolute;top:9px;inset-inline-start:9px;display:flex;align-items:center;justify-content:center;width:24px;height:24px;border:1px solid {{ n.markBorder }};border-radius:50%;background:{{ n.markBg }};color:{{ n.markColor }};font-size:13px;line-height:1">{{ n.mark }}</span>
+                </sc-if>
+                <span style="position:absolute;bottom:8px;inset-inline-end:9px;padding:1px 7px;border:1px solid var(--color-divider);border-radius:999px;background:color-mix(in srgb, #fbfaf8 82%, transparent);font-size:11px;font-variant-numeric:tabular-nums;color:var(--color-neutral-700)">{{ n.pageLabel }}</span>
+              </button>
+              <div style="display:flex;flex-direction:column;gap:3px">
+                <sc-if value="{{ n.renaming }}" hint-placeholder-val="{{ false }}">
+                  <input class="input" value="{{ n.draft }}" onChange="{{ n.onDraft }}" onKeyDown="{{ n.commitKey }}" onBlur="{{ n.commit }}" autoFocus="{{ true }}" style="width:100%;padding:3px 7px;font-size:14px">
+                </sc-if>
+                <sc-if value="{{ n.showName }}" hint-placeholder-val="{{ true }}">
+                  <span style="font-size:16px;font-family:var(--font-heading);font-weight:500">{{ n.title }}</span>
+                </sc-if>
+                <span style="font-size:12px;font-variant-numeric:tabular-nums;color:var(--color-neutral-600)">{{ n.date }}</span>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+
+        <sc-if value="{{ isEmpty }}" hint-placeholder-val="{{ false }}">
+          <p style="margin-top:40px;font-size:15px;color:var(--color-neutral-600)">No lessons here yet. Hit “New lesson” to start writing.</p>
+        </sc-if>
+      </main>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ inEditor }}" hint-placeholder-val="{{ false }}">
+    <div style="display:flex;width:100%;height:100%">
+    <div style="position:relative;flex:1;min-width:0;display:flex;flex-direction:column;height:100%">
+      <div style="position:absolute;top:12px;inset-inline:16px;z-index:30;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;pointer-events:none">
+
+        <div style="display:flex;align-items:center;gap:10px;padding:7px 12px;border:1px solid var(--color-divider);border-radius:14px;background:#fbfaf8;box-shadow:var(--shadow-md);pointer-events:auto">
+          <button onClick="{{ closeNote }}" title="Back" style="display:flex;align-items:center;justify-content:center;width:30px;height:28px;padding:0;border:0;border-radius:var(--radius-md);background:transparent;cursor:pointer;color:var(--color-text)" style-hover="background:var(--color-neutral-200)">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"></path><path d="M12 19l-7-7 7-7"></path></svg>
+          </button>
+          <span style="width:1px;height:20px;background:var(--color-divider)"></span>
+          <div style="display:flex;flex-direction:column;min-width:0">
+            <input value="{{ noteTitle }}" onChange="{{ onTitle }}" placeholder="Lesson title…" style="border:0;border-bottom:1px solid transparent;background:transparent;font-family:var(--font-heading);font-weight:500;font-size:14.5px;line-height:1.2;color:var(--color-text);padding:0 0 1px;width:170px" style-hover="border-bottom-color:var(--color-divider)" style-focus="border-bottom-color:var(--color-accent)">
+            <span style="font-size:10px;font-variant-numeric:tabular-nums;color:var(--color-neutral-600);white-space:nowrap">{{ noteMeta }}</span>
+          </div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;border:1px solid var(--color-divider);border-radius:20px;background:#fbfaf8;box-shadow:var(--shadow-md);overflow:hidden;pointer-events:auto">
+          <div style="display:flex;align-items:stretch;padding:6px 10px 0">
+            <sc-for list="{{ tools }}" as="t" hint-placeholder-count="9">
+              <sc-if value="{{ t.isDivider }}" hint-placeholder-val="{{ false }}">
+                <span style="width:1px;margin:8px 8px 10px;background:var(--color-divider)"></span>
+              </sc-if>
+              <sc-if value="{{ t.isTool }}" hint-placeholder-val="{{ true }}">
+                <button onClick="{{ t.pick }}" onPointerDown="{{ t.press }}" onPointerUp="{{ t.release }}" onPointerLeave="{{ t.release }}" title="{{ t.label }}" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;width:56px;height:52px;padding:0;border:0;border-bottom:2.5px solid {{ t.line }};background:transparent;cursor:pointer;color:{{ t.color }};transform:{{ t.lift }};transition:transform .16s ease" style-hover="color:var(--color-accent-700)">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="{{ t.icon }}"></path></svg>
+                  <span style="font-family:var(--font-body);font-size:9px;letter-spacing:.02em;line-height:1">{{ t.label }}</span>
+                </button>
+              </sc-if>
+            </sc-for>
+          </div>
+          <div style="height:1px;background:var(--color-divider)"></div>
+          <div style="display:flex;align-items:center;padding:9px 10px">
+            <div style="display:flex;align-items:center;gap:13px">
+              <sc-for list="{{ quickInks }}" as="c" hint-placeholder-count="4">
+                <button onClick="{{ c.pick }}" onPointerDown="{{ c.press }}" onPointerUp="{{ c.release }}" onPointerLeave="{{ c.release }}" title="{{ c.label }}" style="width:24px;height:24px;padding:0;border:0;border-radius:50%;cursor:pointer;background:{{ c.value }};box-shadow:{{ c.shadow }};transform:{{ c.scale }};transition:transform .15s ease,box-shadow .15s ease"></button>
+              </sc-for>
+            </div>
+            <span style="width:1px;height:30px;margin:0 12px;background:var(--color-divider)"></span>
+            <div style="display:flex;align-items:center;gap:6px">
+              <sc-for list="{{ sizes }}" as="z" hint-placeholder-count="4">
+                <button onClick="{{ z.pick }}" title="{{ z.label }}" style="display:flex;align-items:center;justify-content:center;width:30px;height:30px;padding:0;border:0;border-radius:50%;background:{{ z.bg }};cursor:pointer" style-hover="background:var(--color-neutral-200)">
+                  <span style="border-radius:50%;background:var(--color-text);width:{{ z.dot }};height:{{ z.dot }}"></span>
+                </button>
+              </sc-for>
+            </div>
+            <span style="width:1px;height:30px;margin:0 12px;background:var(--color-divider)"></span>
+            <button onClick="{{ openPalette }}" title="All colours" style="display:flex;align-items:center;justify-content:center;width:30px;height:30px;padding:0;border:0;border-radius:50%;background:var(--color-neutral-200);cursor:pointer" style-hover="background:var(--color-accent-100)">
+              <span style="width:7px;height:7px;border-radius:50%;background:{{ ink }}"></span>
+            </button>
+          </div>
+        </div>
+
+        <sc-if value="{{ insertOpen }}" hint-placeholder-val="{{ false }}">
+          <div style="position:absolute;top:104px;left:50%;transform:translateX(-50%);z-index:36;width:214px;padding:5px;border:1px solid var(--color-divider);border-radius:16px;background:#fbfaf8;box-shadow:var(--shadow-lg);pointer-events:auto">
+            <button onClick="{{ pickImage }}" style="display:flex;align-items:center;justify-content:space-between;width:100%;padding:9px 11px;border:0;border-radius:var(--radius-md);background:transparent;cursor:pointer;font-family:var(--font-body);font-size:14.5px;color:var(--color-text)" style-hover="background:var(--color-neutral-200)">
+              <span>Photo from device</span>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity:.75"><rect x="3.5" y="5" width="17" height="14" rx="2.4"></rect><circle cx="9" cy="10" r="1.6"></circle><path d="M4 17l5-4.5 4 3.5 3-2.5 4 3.5"></path></svg>
+            </button>
+            <button onClick="{{ insertText }}" style="display:flex;align-items:center;justify-content:space-between;width:100%;padding:9px 11px;border:0;border-radius:var(--radius-md);background:transparent;cursor:pointer;font-family:var(--font-body);font-size:14.5px;color:var(--color-text)" style-hover="background:var(--color-neutral-200)">
+              <span>Text box</span>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" style="opacity:.75"><path d="M5 6.5h9M9.5 6.5v11M14.5 11h4.5M16.8 11v6.5"></path></svg>
+            </button>
+            <button onClick="{{ insertNewPage }}" style="display:flex;align-items:center;justify-content:space-between;width:100%;padding:9px 11px;border:0;border-radius:var(--radius-md);background:transparent;cursor:pointer;font-family:var(--font-body);font-size:14.5px;color:var(--color-text)" style-hover="background:var(--color-neutral-200)">
+              <span>New page</span>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity:.75"><path d="M6 3.5h7.5L18 8v12.5H6zM12 11v5M9.5 13.5h5"></path></svg>
+            </button>
+            <sc-if value="{{ hasClipItems }}" hint-placeholder-val="{{ false }}">
+              <button onClick="{{ pasteHere }}" style="display:flex;align-items:center;justify-content:space-between;width:100%;padding:9px 11px;border:0;border-radius:var(--radius-md);background:transparent;cursor:pointer;font-family:var(--font-body);font-size:14.5px;color:var(--color-text)" style-hover="background:var(--color-neutral-200)">
+                <span>Paste clipboard</span>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity:.75"><path d="M8 4.5h8v3H8zM6 6.5H4.5V20h15V6.5H18"></path></svg>
+              </button>
+            </sc-if>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ sizesOpen }}" hint-placeholder-val="{{ false }}">
+          <div style="position:absolute;top:104px;left:50%;transform:translateX(-50%);z-index:36;display:flex;align-items:center;gap:4px;padding:7px 9px;border:1px solid var(--color-divider);border-radius:16px;background:#fbfaf8;box-shadow:var(--shadow-lg);pointer-events:auto">
+            <sc-for list="{{ sizes }}" as="z" hint-placeholder-count="4">
+              <button onClick="{{ z.pick }}" title="{{ z.label }}" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;width:52px;padding:6px 0;border:0;border-radius:var(--radius-md);background:{{ z.bg }};cursor:pointer;font-family:var(--font-body);font-size:10.5px;color:var(--color-text)" style-hover="background:var(--color-neutral-200)">
+                <span style="border-radius:50%;background:var(--color-text);width:{{ z.dot }};height:{{ z.dot }}"></span>
+                <span>{{ z.label }}</span>
+              </button>
+            </sc-for>
+          </div>
+        </sc-if>
+
+        <div style="display:flex;align-items:center;gap:3px;padding:6px 9px;border:1px solid var(--color-divider);border-radius:14px;background:#fbfaf8;box-shadow:var(--shadow-md);pointer-events:auto">
+          <button onClick="{{ undo }}" title="Undo" style="display:flex;align-items:center;justify-content:center;width:32px;height:30px;padding:0;border:0;border-radius:var(--radius-md);background:transparent;cursor:pointer;color:var(--color-text)" style-hover="background:var(--color-neutral-200)">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14L5 10l4-4"></path><path d="M5 10h9a5 5 0 0 1 0 10h-3"></path></svg>
+          </button>
+          <button onClick="{{ redo }}" title="Redo" style="display:flex;align-items:center;justify-content:center;width:32px;height:30px;padding:0;border:0;border-radius:var(--radius-md);background:transparent;cursor:pointer;color:{{ redoColor }}" style-hover="background:var(--color-neutral-200)">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14l4-4-4-4"></path><path d="M19 10h-9a5 5 0 0 0 0 10h3"></path></svg>
+          </button>
+          <span style="width:1px;height:20px;background:var(--color-divider)"></span>
+          <button onClick="{{ toggleMore }}" title="More" style="display:flex;align-items:center;justify-content:center;width:32px;height:30px;padding:0;border:0;border-radius:var(--radius-md);background:{{ moreBg }};cursor:pointer;color:var(--color-text)" style-hover="background:var(--color-neutral-200)">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="5.5" cy="12" r="1.3" fill="currentColor" stroke="none"></circle><circle cx="12" cy="12" r="1.3" fill="currentColor" stroke="none"></circle><circle cx="18.5" cy="12" r="1.3" fill="currentColor" stroke="none"></circle></svg>
+          </button>
+          <button onClick="{{ togglePages }}" title="All pages" style="display:flex;align-items:center;justify-content:center;width:32px;height:30px;padding:0;border:0;border-radius:var(--radius-md);background:{{ pagesBg }};cursor:pointer;color:{{ pagesColor }}" style-hover="background:var(--color-neutral-200)">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3.5" width="11.5" height="14" rx="2.6"></rect><path d="M15.5 20.5H6.6A3.1 3.1 0 0 1 3.5 17.4V8.2"></path></svg>
+          </button>
+        </div>
+      </div>
+
+      <sc-if value="{{ paletteOpen }}" hint-placeholder-val="{{ false }}">
+        <div onPointerDown="{{ closePops }}" style="position:absolute;inset:0;z-index:34"></div>
+        <div style="position:absolute;top:104px;left:50%;transform:translateX(-50%);z-index:35;width:250px;padding:12px;border:1px solid var(--color-divider);border-radius:var(--radius-lg);background:#fbfaf8;box-shadow:var(--shadow-lg)">
+          <span style="display:block;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--color-neutral-600);margin-bottom:9px">All colours</span>
+          <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:9px">
+            <sc-for list="{{ allInks }}" as="c" hint-placeholder-count="14">
+              <button onClick="{{ c.pick }}" title="{{ c.label }}" style="width:26px;height:26px;padding:0;border:0;border-radius:50%;cursor:pointer;background:{{ c.value }};box-shadow:{{ c.shadow }}"></button>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ moreOpen }}" hint-placeholder-val="{{ false }}">
+        <div onPointerDown="{{ closePops }}" style="position:absolute;inset:0;z-index:34"></div>
+        <div style="position:absolute;top:60px;inset-inline-end:16px;z-index:35;width:308px;display:flex;flex-direction:column;gap:10px">
+          <div style="border:1px solid var(--color-divider);border-radius:var(--radius-lg);background:#fbfaf8;box-shadow:var(--shadow-lg);overflow:hidden">
+            <button onClick="{{ quickExport }}" style="display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;padding:13px 16px;border:0;border-bottom:1px solid var(--color-divider);background:transparent;cursor:pointer;text-align:start;color:var(--color-text)" style-hover="background:var(--color-neutral-200)">
+              <span style="display:flex;flex-direction:column;gap:2px">
+                <span style="font-family:var(--font-heading);font-weight:500;font-size:17px">Quick export</span>
+                <span style="font-size:11.5px;color:var(--color-neutral-700)">PDF · All pages</span>
+              </span>
+              <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity:.8"><path d="M14 4h6v6M20 4l-8.5 8.5M18 14.5V19a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 4 19V8a1.5 1.5 0 0 1 1.5-1.5H10"></path></svg>
+            </button>
+            <button onClick="{{ exportAs }}" style="display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;padding:13px 16px;border:0;border-bottom:1px solid var(--color-divider);background:transparent;cursor:pointer;text-align:start;font-family:var(--font-heading);font-weight:500;font-size:17px;color:var(--color-text)" style-hover="background:var(--color-neutral-200)">
+              <span>Export as…</span>
+              <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="3 2.4" style="opacity:.8"><rect x="4" y="6.5" width="14" height="14" rx="1.6"></rect><path d="M14 4h6v6M20 4l-7 7" stroke-dasharray="0"></path></svg>
+            </button>
+            <button onClick="{{ publishGallery }}" style="display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;padding:13px 16px;border:0;border-bottom:1px solid var(--color-divider);background:transparent;cursor:pointer;text-align:start;font-family:var(--font-heading);font-weight:500;font-size:17px;color:var(--color-text)" style-hover="background:var(--color-neutral-200)">
+              <span>Publish to Gallery</span>
+              <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity:.8"><rect x="4" y="4" width="16" height="16" rx="2.2"></rect><path d="M12 8.2l1.3 2.6 2.9.4-2.1 2 .5 2.9-2.6-1.4-2.6 1.4.5-2.9-2.1-2 2.9-.4z"></path></svg>
+            </button>
+            <button onClick="{{ createLink }}" style="display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;padding:13px 16px;border:0;background:transparent;cursor:pointer;text-align:start;font-family:var(--font-heading);font-weight:500;font-size:17px;color:var(--color-text)" style-hover="background:var(--color-neutral-200)">
+              <span>Create link</span>
+              <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity:.8"><path d="M10 13.8a4 4 0 0 0 5.7 0l2.6-2.6a4 4 0 0 0-5.7-5.7l-1.3 1.3M14 10.2a4 4 0 0 0-5.7 0l-2.6 2.6a4 4 0 1 0 5.7 5.7l1.3-1.3"></path></svg>
+            </button>
+          </div>
+
+          <div style="border:1px solid var(--color-divider);border-radius:var(--radius-lg);background:#fbfaf8;box-shadow:var(--shadow-lg);overflow:hidden">
+            <button onClick="{{ studySession }}" style="display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;padding:13px 16px;border:0;background:{{ studyBg }};cursor:pointer;text-align:start;font-family:var(--font-heading);font-weight:500;font-size:17px;color:var(--color-text)" style-hover="background:var(--color-neutral-200)">
+              <span>{{ studyLabel }}</span>
+              <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity:.8"><circle cx="12" cy="13.2" r="7.3"></circle><path d="M12 9.8v3.4l2.2 1.6M9.6 3.2h4.8"></path></svg>
+            </button>
+          </div>
+
+          <div style="border:1px solid var(--color-divider);border-radius:var(--radius-lg);background:#fbfaf8;box-shadow:var(--shadow-lg);overflow:hidden">
+            <button onClick="{{ openTemplate }}" style="display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;padding:13px 16px;border:0;border-bottom:1px solid var(--color-divider);background:transparent;cursor:pointer;text-align:start;font-family:var(--font-heading);font-weight:500;font-size:17px;color:var(--color-text)" style-hover="background:var(--color-neutral-200)">
+              <span>Template settings</span>
+              <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity:.8"><rect x="4" y="4.5" width="16" height="15" rx="2"></rect><path d="M4 9h16M9.5 9v10.5"></path></svg>
+            </button>
+            <button onClick="{{ openView }}" style="display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;padding:13px 16px;border:0;background:transparent;cursor:pointer;text-align:start;font-family:var(--font-heading);font-weight:500;font-size:17px;color:var(--color-text)" style-hover="background:var(--color-neutral-200)">
+              <span>View settings</span>
+              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="opacity:.7"><path d="M9 5l7 7-7 7"></path></svg>
+            </button>
+          </div>
+
+          <div style="border:1px solid var(--color-divider);border-radius:var(--radius-lg);background:#fbfaf8;box-shadow:var(--shadow-lg);overflow:hidden">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 16px 13px">
+              <span style="display:flex;flex-direction:column;gap:3px;min-width:0;flex:1">
+                <input value="{{ noteTitle }}" onChange="{{ onTitle }}" placeholder="Lesson title…" style="width:100%;padding:2px 6px;margin-inline-start:-6px;border:1px solid transparent;border-radius:var(--radius-sm);background:transparent;font-family:var(--font-heading);font-weight:500;font-size:17px;color:var(--color-text)" style-hover="border-color:var(--color-divider)" style-focus="border-color:var(--color-accent);background:var(--color-bg)">
+                <span style="font-size:11.5px;color:var(--color-neutral-700);font-variant-numeric:tabular-nums">{{ noteCreated }} · tap the title to rename</span>
+              </span>
+              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity:.7;flex:none"><path d="M4 20l1.1-4.1L15.6 5.4a2.3 2.3 0 0 1 3.2 3.2L8.3 19 4 20z"></path></svg>
+            </div>
+          </div>
+
+          <div style="border:1px solid var(--color-divider);border-radius:var(--radius-lg);background:#fbfaf8;box-shadow:var(--shadow-lg);overflow:hidden">
+            <button onClick="{{ openQuiz }}" style="display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;padding:13px 16px;border:0;background:transparent;cursor:pointer;text-align:start;color:var(--color-text)" style-hover="background:var(--color-neutral-200)">
+              <span style="display:flex;flex-direction:column;gap:2px">
+                <span style="font-family:var(--font-heading);font-weight:500;font-size:17px">Practice test</span>
+                <span style="font-size:11.5px;color:var(--color-neutral-700)">Questions from this lesson</span>
+              </span>
+              <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity:.8"><circle cx="12" cy="12" r="8.4"></circle><path d="M9.6 9.6a2.5 2.5 0 1 1 3.4 2.3c-.7.3-1.1.8-1.1 1.5v.4M12 16.4v.5"></path></svg>
+            </button>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ shareOpen }}" hint-placeholder-val="{{ false }}">
+        <div onPointerDown="{{ closePops }}" style="position:absolute;inset:0;z-index:36"></div>
+        <div style="position:absolute;top:58px;inset-inline-end:16px;z-index:37;width:414px;max-height:calc(100% - 92px);overflow-y:auto;padding:0;border:1px solid var(--color-divider);border-radius:16px;background:var(--color-bg);box-shadow:var(--shadow-lg)">
+          <div style="display:flex;align-items:center;gap:14px;padding:16px 18px;background:#fbfaf8;border-bottom:1px solid var(--color-divider)">
+            <span style="position:relative;flex:none;width:52px;height:68px;border:1px solid var(--color-divider);border-radius:3px;background-color:{{ paperBg }};background-image:{{ paperImage }};background-size:{{ paperSize }};box-shadow:var(--shadow-sm);overflow:hidden">
+              <svg viewBox="0 0 820 1100" width="100%" height="100%" style="display:block">
+                <sc-for list="{{ firstPagePaths }}" as="p" hint-placeholder-count="0">
+                  <path d="{{ p.d }}" stroke="{{ p.color }}" stroke-width="{{ p.w }}" stroke-linecap="round" fill="none" opacity="{{ p.o }}"></path>
+                </sc-for>
+              </svg>
+            </span>
+            <span style="display:flex;flex-direction:column;gap:3px;min-width:0">
+              <span style="font-family:var(--font-heading);font-weight:500;font-size:18px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ noteTitle }}</span>
+              <span style="font-size:12px;color:var(--color-neutral-700);font-variant-numeric:tabular-nums">{{ shareMeta }}</span>
+            </span>
+          </div>
+
+          <div style="display:flex;gap:14px;padding:16px 18px;overflow-x:auto">
+            <sc-for list="{{ shareTargets }}" as="t" hint-placeholder-count="5">
+              <button onClick="{{ t.act }}" style="display:flex;flex-direction:column;align-items:center;gap:7px;flex:none;width:62px;padding:0;border:0;background:transparent;cursor:pointer">
+                <span style="display:flex;align-items:center;justify-content:center;width:54px;height:54px;border:1px solid var(--color-divider);border-radius:13px;background:{{ t.bg }};color:{{ t.fg }};font-family:var(--font-heading);font-weight:500;font-size:19px;box-shadow:var(--shadow-sm)">{{ t.mark }}</span>
+                <span style="font-size:10.5px;line-height:1.2;text-align:center;color:var(--color-neutral-800)">{{ t.label }}</span>
+              </button>
+            </sc-for>
+          </div>
+
+          <div style="padding:0 14px 6px">
+            <div style="border:1px solid var(--color-divider);border-radius:12px;background:#fbfaf8;overflow:hidden">
+              <sc-for list="{{ shareActions }}" as="a" hint-placeholder-count="5">
+                <button onClick="{{ a.act }}" style="display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;padding:13px 15px;border:0;border-bottom:1px solid {{ a.rule }};background:transparent;cursor:pointer;text-align:start;font-family:var(--font-body);font-size:15.5px;color:var(--color-text)" style-hover="background:var(--color-neutral-200)">
+                  <span>{{ a.label }}</span>
+                  <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.45" stroke-linecap="round" stroke-linejoin="round" style="flex:none;opacity:.8"><path d="{{ a.icon }}"></path></svg>
+                </button>
+              </sc-for>
+            </div>
+          </div>
+
+          <button onClick="{{ closePops }}" style="display:block;width:100%;padding:13px 16px 16px;border:0;background:transparent;cursor:pointer;text-align:center;font-family:var(--font-heading);font-weight:500;font-size:14.5px;color:var(--color-accent-700)" style-hover="color:var(--color-accent)">Done</button>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ templateOpen }}" hint-placeholder-val="{{ false }}">
+        <div onPointerDown="{{ closePops }}" style="position:absolute;inset:0;z-index:34"></div>
+        <div style="position:absolute;top:60px;inset-inline-end:16px;z-index:35;width:340px;padding:18px 18px 16px;border:1px solid var(--color-divider);border-radius:var(--radius-lg);background:var(--color-bg);box-shadow:var(--shadow-lg)">
+          <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:4px">
+            <span style="font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--color-neutral-600)">Paper template</span>
+            <span style="font-family:var(--font-heading);font-size:13px;color:var(--color-accent-700)">{{ paperName }}</span>
+          </div>
+          <div style="height:1px;background:var(--color-divider);margin:0 0 14px"></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+            <sc-for list="{{ papers }}" as="p" hint-placeholder-count="8">
+              <button onClick="{{ p.pick }}" title="{{ p.label }}" style="display:flex;flex-direction:column;align-items:stretch;gap:8px;padding:0;border:0;background:transparent;cursor:pointer">
+                <span style="position:relative;display:block;height:96px;border-radius:var(--radius-md);background-color:{{ p.paperBg }};background-image:{{ p.swatchImage }};background-size:{{ p.swatchSize }};box-shadow:{{ p.shadow }};overflow:hidden">
+                  <span style="position:absolute;inset:0;background:{{ p.sheen }}"></span>
+                  <sc-if value="{{ p.active }}" hint-placeholder-val="{{ false }}">
+                    <span style="position:absolute;top:7px;inset-inline-end:7px;display:flex;align-items:center;justify-content:center;width:19px;height:19px;border-radius:50%;background:var(--color-accent);color:#fbfaf8;font-size:11px;line-height:1">✓</span>
+                  </sc-if>
+                </span>
+                <span style="font-family:var(--font-heading);font-weight:500;font-size:13.5px;letter-spacing:.01em;text-align:start;color:{{ p.labelColor }}">{{ p.label }}</span>
+              </button>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ viewOpen }}" hint-placeholder-val="{{ false }}">
+        <div onPointerDown="{{ closePops }}" style="position:absolute;inset:0;z-index:34"></div>
+        <div style="position:absolute;top:60px;inset-inline-end:16px;z-index:35;width:288px;padding:6px;border:1px solid var(--color-divider);border-radius:var(--radius-lg);background:#fbfaf8;box-shadow:var(--shadow-lg)">
+          <span style="display:block;padding:7px 11px 9px;border-bottom:1px solid var(--color-divider);font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--color-neutral-600)">View settings</span>
+          <sc-for list="{{ viewOptions }}" as="v" hint-placeholder-count="3">
+            <button onClick="{{ v.act }}" style="display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;padding:10px 11px;border:0;border-radius:var(--radius-md);background:transparent;cursor:pointer;text-align:start;font-family:var(--font-body);font-size:14.5px;color:var(--color-text)" style-hover="background:var(--color-neutral-200)">
+              <span>{{ v.label }}</span>
+              <span style="font-size:12px;color:var(--color-accent-700)">{{ v.value }}</span>
+            </button>
+          </sc-for>
+        </div>
+      </sc-if>
+
+      <div ref="{{ scrollRef }}" style="flex:1;overflow:auto;display:flex;flex-direction:column;align-items:center;gap:22px;padding:104px 20px 70px;background:var(--color-neutral-200)">
+        <sc-for list="{{ pages }}" as="pg" hint-placeholder-count="1">
+          <div style="position:relative;flex:none;width:820px;height:1100px;background-color:{{ paperBg }};background-image:{{ paperImage }};background-size:{{ paperSize }};border:1px solid var(--color-divider);box-shadow:var(--shadow-md)">
+            <canvas ref="{{ pg.ref }}" width="1640" height="2200" onPointerDown="{{ pg.down }}" onPointerMove="{{ pg.move }}" onPointerUp="{{ pg.up }}" onPointerLeave="{{ pg.up }}" style="position:absolute;inset:0;width:820px;height:1100px;touch-action:none;cursor:crosshair"></canvas>
+            <span style="position:absolute;bottom:10px;inset-inline-start:14px;font-size:11px;font-variant-numeric:tabular-nums;color:{{ pg.numColor }}">{{ pg.num }}</span>
+            <sc-if value="{{ pg.editingText }}" hint-placeholder-val="{{ false }}">
+              <input value="{{ textDraft }}" onChange="{{ onTextDraft }}" onKeyDown="{{ onTextKey }}" onBlur="{{ commitText }}" autoFocus="{{ true }}" placeholder="Type here…" style="position:absolute;top:{{ pg.textTop }};left:{{ pg.textLeft }};width:320px;padding:5px 8px;border:1px solid var(--color-accent);border-radius:var(--radius-sm);background:color-mix(in srgb, #fbfaf8 92%, transparent);font-family:var(--font-body);font-size:20px;color:var(--color-text);z-index:6">
+            </sc-if>
+            <sc-if value="{{ pg.hasSel }}" hint-placeholder-val="{{ false }}">
+              <div style="position:absolute;top:{{ pg.selTop }};left:{{ pg.selLeft }};z-index:6;display:flex;align-items:center;gap:3px;padding:5px 7px;border:1px solid var(--color-divider);border-radius:var(--radius-md);background:#fbfaf8;box-shadow:var(--shadow-md)">
+                <span style="padding:0 5px;font-size:11px;font-variant-numeric:tabular-nums;color:var(--color-neutral-600)">{{ pg.selCount }}</span>
+                <sc-for list="{{ selActions }}" as="a" hint-placeholder-count="4">
+                  <button onClick="{{ a.act }}" style="padding:4px 9px;border:0;border-radius:var(--radius-sm);background:transparent;cursor:pointer;font-family:var(--font-body);font-size:13px;color:{{ a.color }}" style-hover="background:var(--color-neutral-200)">{{ a.label }}</button>
+                </sc-for>
+              </div>
+            </sc-if>
+          </div>
+        </sc-for>
+
+      </div>
+      <input type="file" accept="image/*" ref="{{ fileRef }}" onChange="{{ onFile }}" style="display:none">
+    </div>
+
+    <sc-if value="{{ pagesOpen }}" hint-placeholder-val="{{ false }}">
+      <aside style="width:300px;flex:none;height:100%;display:flex;flex-direction:column;border-inline-start:1px solid var(--color-divider);background:var(--color-bg)">
+        <div style="flex:none;display:flex;flex-direction:column;gap:12px;padding:74px 18px 14px">
+          <input class="input" value="{{ pageQuery }}" onChange="{{ onPageQuery }}" placeholder="Search pages…" style="width:100%">
+          <div style="display:flex;align-items:center;gap:7px">
+            <h4 style="margin:0;font-size:21px;font-weight:500">All Pages</h4>
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="color:var(--color-neutral-700)"><path d="M6 9l6 6 6-6"></path></svg>
+          </div>
+        </div>
+        <div style="flex:1;overflow-y:auto;display:flex;flex-direction:column;align-items:center;gap:18px;padding:4px 18px 20px">
+          <sc-for list="{{ thumbs }}" as="t" hint-placeholder-count="2">
+            <div style="display:flex;flex-direction:column;align-items:center;gap:6px;width:100%">
+              <div onClick="{{ t.go }}" style="position:relative;width:100%;aspect-ratio:820/1100;border:2px solid {{ t.border }};border-radius:var(--radius-md);background-color:{{ paperBg }};background-image:{{ paperImage }};background-size:{{ paperSize }};box-shadow:var(--shadow-sm);cursor:pointer;overflow:hidden">
+                <svg viewBox="0 0 820 1100" width="100%" height="100%" style="display:block">
+                  <sc-for list="{{ t.paths }}" as="p" hint-placeholder-count="0">
+                    <path d="{{ p.d }}" stroke="{{ p.color }}" stroke-width="{{ p.w }}" stroke-linecap="round" fill="none" opacity="{{ p.o }}"></path>
+                  </sc-for>
+                </svg>
+                <svg width="26" height="30" viewBox="0 0 26 30" fill="none" stroke="var(--color-neutral-500)" stroke-width="1.3" style="position:absolute;top:-1px;inset-inline-end:10px"><path d="M2 0v22l6-5 6 5V0" transform="translate(4,0)"></path></svg>
+                <button onClick="{{ t.openMenu }}" title="Page options" style="position:absolute;bottom:9px;inset-inline-start:9px;display:flex;align-items:center;justify-content:center;width:28px;height:28px;padding:0;border:1px solid var(--color-divider);border-radius:50%;background:color-mix(in srgb, #fbfaf8 88%, transparent);cursor:pointer;color:var(--color-neutral-800)" style-hover="border-color:var(--color-accent);color:var(--color-accent-700)">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="5.5" cy="12" r="1.4" fill="currentColor"></circle><circle cx="12" cy="12" r="1.4" fill="currentColor"></circle><circle cx="18.5" cy="12" r="1.4" fill="currentColor"></circle></svg>
+                </button>
+              </div>
+              <span style="font-size:12px;font-variant-numeric:tabular-nums;color:{{ t.numColor }}">{{ t.num }}</span>
+            </div>
+          </sc-for>
+        </div>
+        <div style="flex:none;display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 14px 14px;padding:12px 16px;border:1px solid var(--color-divider);border-radius:var(--radius-lg);background:#fbfaf8;box-shadow:var(--shadow-sm)">
+          <button onClick="{{ addPage }}" style="padding:0;border:0;background:transparent;cursor:pointer;font-family:var(--font-heading);font-weight:500;font-size:15px;color:var(--color-accent-700)" style-hover="color:var(--color-accent)">Add page</button>
+          <button onClick="{{ togglePages }}" title="Close" style="display:flex;align-items:center;justify-content:center;padding:0;border:0;background:transparent;cursor:pointer;color:var(--color-neutral-700)" style-hover="color:var(--color-text)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4H4v5M15 20h5v-5M20 9V4h-5M4 15v5h5"></path></svg>
+          </button>
+        </div>
+      </aside>
+    </sc-if>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ pageMenuOpen }}" hint-placeholder-val="{{ false }}">
+    <div onPointerDown="{{ closePageMenu }}" style="position:fixed;inset:0;z-index:44;background:color-mix(in srgb, #201f1d 10%, transparent)">
+      <div onPointerDown="{{ stopPd }}" style="position:fixed;top:{{ pageMenuTop }};inset-inline-start:{{ pageMenuLeft }};z-index:45;width:246px;padding:5px;border:1px solid var(--color-divider);border-radius:var(--radius-lg);background:#fbfaf8;box-shadow:var(--shadow-lg)">
+        <span style="display:block;padding:7px 11px 8px;border-bottom:1px solid var(--color-divider);font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--color-neutral-600)">{{ pageMenuTitle }}</span>
+        <sc-for list="{{ pageMenuItems }}" as="m" hint-placeholder-count="7">
+          <button onClick="{{ m.act }}" style="display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;padding:9px 11px;border:0;border-radius:var(--radius-md);background:transparent;cursor:pointer;text-align:start;font-family:var(--font-body);font-size:14.5px;color:{{ m.color }}" style-hover="background:var(--color-neutral-200)">
+            <span>{{ m.label }}</span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex:none;opacity:.75"><path d="{{ m.icon }}"></path></svg>
+          </button>
+        </sc-for>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ menuOpen }}" hint-placeholder-val="{{ false }}">
+    <div onPointerDown="{{ closeMenu }}" style="position:fixed;inset:0;z-index:40;background:color-mix(in srgb, #201f1d 12%, transparent);backdrop-filter:blur(1.5px)">
+      <div onPointerDown="{{ stopPd }}" style="position:fixed;top:{{ menuTop }};inset-inline-start:{{ menuLeft }};z-index:41;width:232px;padding:6px;border:1px solid var(--color-divider);border-radius:var(--radius-lg);background:#fbfaf8;box-shadow:var(--shadow-lg);animation:none">
+        <div style="padding:8px 11px 9px;border-bottom:1px solid var(--color-divider)">
+          <span style="display:block;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--color-neutral-600)">{{ menuKind }}</span>
+          <span style="display:block;font-family:var(--font-heading);font-weight:500;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ menuTitle }}</span>
+        </div>
+        <sc-for list="{{ menuItems }}" as="m" hint-placeholder-count="3">
+          <button onClick="{{ m.act }}" style="display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;padding:9px 11px;border:0;border-radius:var(--radius-md);background:transparent;cursor:pointer;text-align:start;font-family:var(--font-body);font-size:14.5px;color:{{ m.color }}" style-hover="background:var(--color-neutral-200)">
+            <span>{{ m.label }}</span>
+            <span style="font-size:12px;color:var(--color-neutral-500)">{{ m.glyph }}</span>
+          </button>
+        </sc-for>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ quizOpen }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed;inset:0;z-index:60;display:flex;align-items:flex-start;justify-content:center;padding:52px 24px;background:color-mix(in srgb, #201f1d 22%, transparent);overflow-y:auto">
+      <div style="width:100%;max-width:720px;padding:30px 34px 34px;border:1px solid var(--color-divider);border-radius:var(--radius-lg);background:var(--color-bg);box-shadow:var(--shadow-lg)">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:20px">
+          <div style="display:flex;flex-direction:column;gap:3px">
+            <span style="font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--color-neutral-600)">Practice test</span>
+            <h2 style="margin:0;font-weight:400;font-size:34px">{{ quizSubject }}</h2>
+          </div>
+          <button onClick="{{ closeQuiz }}" title="Close" style="display:flex;align-items:center;justify-content:center;width:34px;height:34px;padding:0;border:1px solid var(--color-divider);border-radius:50%;background:transparent;cursor:pointer;color:var(--color-text)" style-hover="border-color:var(--color-accent);color:var(--color-accent-700)">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+          </button>
+        </div>
+        <div style="height:1px;background:var(--color-divider);margin:20px 0 22px"></div>
+
+        <sc-if value="{{ quizSetup }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex;flex-direction:column;gap:18px">
+            <label style="display:flex;flex-direction:column;gap:7px">
+              <span style="font-size:12.5px;color:var(--color-neutral-700)">Words, terms or topics from the lesson — one per line or comma-separated</span>
+              <textarea value="{{ quizSource }}" onChange="{{ onQuizSource }}" rows="5" placeholder="e.g. reluctant, to look forward to, present perfect" style="width:100%;padding:10px 12px;border:1px solid var(--color-divider);border-radius:var(--radius-md);background:#fbfaf8;font-family:var(--font-body);font-size:15px;line-height:1.55;color:var(--color-text);resize:vertical"></textarea>
+            </label>
+            <div style="display:flex;flex-wrap:wrap;gap:26px">
+              <div style="display:flex;flex-direction:column;gap:8px">
+                <span style="font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--color-neutral-600)">Question type</span>
+                <div style="display:flex;gap:8px">
+                  <sc-for list="{{ quizModes }}" as="m" hint-placeholder-count="3">
+                    <button onClick="{{ m.pick }}" style="padding:7px 13px;border:1px solid {{ m.border }};border-radius:var(--radius-md);background:{{ m.bg }};cursor:pointer;font-family:var(--font-body);font-size:13.5px;color:var(--color-text)" style-hover="border-color:var(--color-accent-400)">{{ m.label }}</button>
+                  </sc-for>
+                </div>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:8px">
+                <span style="font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--color-neutral-600)">Questions</span>
+                <div style="display:flex;gap:8px">
+                  <sc-for list="{{ quizCounts }}" as="c" hint-placeholder-count="3">
+                    <button onClick="{{ c.pick }}" style="width:44px;padding:7px 0;border:1px solid {{ c.border }};border-radius:var(--radius-md);background:{{ c.bg }};cursor:pointer;font-family:var(--font-body);font-size:13.5px;font-variant-numeric:tabular-nums;color:var(--color-text)" style-hover="border-color:var(--color-accent-400)">{{ c.label }}</button>
+                  </sc-for>
+                </div>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:14px">
+              <button class="btn btn-primary" onClick="{{ generateQuiz }}" style="font-family:var(--font-heading)">{{ generateLabel }}</button>
+              <span style="font-size:12.5px;color:var(--color-neutral-700)">{{ quizHint }}</span>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ quizRunning }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;gap:22px">
+            <sc-for list="{{ quizItems }}" as="q" hint-placeholder-count="0">
+              <div style="display:flex;flex-direction:column;gap:9px;padding-bottom:20px;border-bottom:1px solid var(--color-divider)">
+                <span style="font-size:11px;font-variant-numeric:tabular-nums;color:var(--color-neutral-600)">{{ q.num }}</span>
+                <p style="margin:0;font-size:18px;line-height:1.5">{{ q.prompt }}</p>
+                <sc-if value="{{ q.hasChoices }}" hint-placeholder-val="{{ false }}">
+                  <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:2px">
+                    <sc-for list="{{ q.choices }}" as="ch" hint-placeholder-count="4">
+                      <button onClick="{{ ch.pick }}" style="padding:7px 13px;border:1px solid {{ ch.border }};border-radius:var(--radius-md);background:{{ ch.bg }};cursor:pointer;font-family:var(--font-body);font-size:14.5px;color:var(--color-text)" style-hover="border-color:var(--color-accent-400)">{{ ch.label }}</button>
+                    </sc-for>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ q.hasInput }}" hint-placeholder-val="{{ true }}">
+                  <input value="{{ q.answer }}" onChange="{{ q.onAnswer }}" placeholder="Your answer…" style="width:100%;max-width:430px;padding:9px 12px;border:1px solid var(--color-divider);border-radius:var(--radius-md);background:#fbfaf8;font-family:var(--font-body);font-size:15px;color:var(--color-text)">
+                </sc-if>
+                <sc-if value="{{ q.marked }}" hint-placeholder-val="{{ false }}">
+                  <div style="display:flex;flex-direction:column;gap:3px;margin-top:4px;padding:10px 13px;border-inline-start:2px solid {{ q.markColor }};background:var(--color-neutral-100)">
+                    <span style="font-family:var(--font-heading);font-weight:500;font-size:14px;color:{{ q.markColor }}">{{ q.verdict }}</span>
+                    <span style="font-size:13.5px;line-height:1.5;color:var(--color-neutral-800)">{{ q.feedback }}</span>
+                  </div>
+                </sc-if>
+              </div>
+            </sc-for>
+            <div style="display:flex;align-items:center;gap:14px">
+              <button class="btn btn-primary" onClick="{{ checkQuiz }}" style="font-family:var(--font-heading)">{{ checkLabel }}</button>
+              <button class="btn btn-ghost" onClick="{{ resetQuiz }}" style="font-family:var(--font-heading)">New test</button>
+              <span style="font-size:13px;color:var(--color-neutral-700);font-variant-numeric:tabular-nums">{{ quizScore }}</span>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1200,&quot;height&quot;:860},&quot;defaultPaper&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;squares&quot;,&quot;lines&quot;,&quot;dots&quot;,&quot;fine&quot;,&quot;plain&quot;,&quot;sepia&quot;,&quot;music&quot;,&quot;dark&quot;],&quot;default&quot;:&quot;squares&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Paper&quot;},&quot;autoAddPage&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Paper&quot;}}">
+class Component extends DCLogic {
+  state = { subjects: null, active: 0, openId: null, tool: 'pen', ink: '#201f1d', size: 1, query: '',
+            adding: false, newName: '', renameSubj: null, renameNote: null, draft: '',
+            editing: false, selected: [], menu: null, pressing: null, pop: null,
+            pagesOpen: false, pageQuery: '', pageMenu: null, pageSel: 0,
+            textEdit: null, textDraft: '', sel: null,
+            quick: ['#201f1d', '#b4322a', '#2f5ea8', '#b68235'] };
+
+  undone = [];
+  clip = null; template = null; clipItems = null; selRect = null;
+  fileRef = React.createRef();
+  insertImage(file) {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const max = 520, scale = Math.min(1, max / img.width, max / img.height);
+        const w = Math.round(img.width * scale), h = Math.round(img.height * scale);
+        const cv = document.createElement('canvas');
+        cv.width = w * 2; cv.height = h * 2;
+        cv.getContext('2d').drawImage(img, 0, 0, w * 2, h * 2);
+        const src = cv.toDataURL('image/jpeg', 0.82);
+        const i = Math.min(this.lastPage, (this.note() || { pages: [] }).pages.length - 1);
+        this.mutateNote(n => ({ ...n, pages: n.pages.map((pg, k) => k === i
+          ? [...pg, { type: 'img', src, x: (this.PW - w) / 2, y: 120, w, h }] : pg) }));
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  }
+  scrollRef = React.createRef();
+  goToPage(i) {
+    const el = this.scrollRef.current;
+    if (el) el.scrollTop = Math.max(0, i * (this.PH + 22) + 104 - 104);
+    this.lastPage = i;
+    this.setState({ pageSel: i });
+  }
+  pressColor(value, e) {
+    if (e.button === 2) return;
+    this.setState({ pressing: 'ink:' + value });
+    clearTimeout(this.pressTimer);
+    this.pressTimer = setTimeout(() => this.setState({ pop: 'palette', pressing: null }), 420);
+  }
+  quizTextFromNote(note) {
+    const bits = [note.title];
+    note.pages.forEach(pg => pg.forEach(it => { if (it.type === 'text' && it.text) bits.push(it.text); }));
+    return bits.join(', ');
+  }
+  quizTextFrom(subj) {
+    const bits = [];
+    (subj ? subj.notes : []).forEach(n => {
+      bits.push(n.title);
+      n.pages.forEach(pg => pg.forEach(it => { if (it.type === 'text' && it.text) bits.push(it.text); }));
+    });
+    return bits.join(', ');
+  }
+  async generate() {
+    const st = this.state;
+    const subj = this.subject();
+    const source = (st.quizSource || '').trim() || this.quizTextFrom(subj);
+    if (!source) { this.setState({ quizHint: 'Add a few words or terms first.' }); return; }
+    this.setState({ quizBusy: true, quizHint: 'Writing your test…' });
+    const mode = st.quizMode || 'blank';
+    const shape = mode === 'blank'
+      ? 'fill-in-the-blank sentences, each with exactly one gap written as ____ , testing the given word in context'
+      : mode === 'choice'
+        ? 'multiple-choice questions with 4 short options, exactly one correct'
+        : 'short open questions that require a one-sentence answer';
+    try {
+      const raw = await window.claude.complete({
+        max_tokens: 2000,
+        system: 'You write school practice tests. Reply with JSON only, no prose, no markdown fences.',
+        messages: [{ role: 'user', content:
+          'Subject: ' + (subj ? subj.name : 'General') + '\n' +
+          'Material: ' + source + '\n\n' +
+          'Write ' + (st.quizCount || 5) + ' ' + shape + '.\n' +
+          'Return JSON: {"items":[{"prompt":"...","choices":["..."],"answer":"..."}]} — omit "choices" when not multiple choice. Keep prompts short and natural.' }]
+      });
+      const m = raw.match(/\{[\s\S]*\}/);
+      const data = JSON.parse(m ? m[0] : raw);
+      const items = (data.items || []).map(q => ({ prompt: q.prompt, choices: q.choices || null, answer: q.answer || '', given: '', verdict: '', feedback: '', ok: null }));
+      this.setState({ quizItems: items, quizBusy: false, quizHint: '', quizPhase: items.length ? 'run' : 'setup' });
+    } catch (e) {
+      this.setState({ quizBusy: false, quizHint: 'Could not build the test — try again.' });
+    }
+  }
+  async check() {
+    const st = this.state;
+    const items = st.quizItems || [];
+    if (!items.length) return;
+    this.setState({ quizBusy: true });
+    const marked = items.map(q => {
+      const given = (q.given || '').trim().toLowerCase();
+      const answer = (q.answer || '').trim().toLowerCase();
+      const ok = !!given && (given === answer || (answer.length > 3 && given.indexOf(answer) >= 0) || (given.length > 3 && answer.indexOf(given) >= 0));
+      return { ...q, ok, verdict: ok ? 'Correct' : (given ? 'Not quite' : 'No answer'), feedback: 'Answer: ' + q.answer };
+    });
+    this.setState({ quizItems: marked, quizBusy: false });
+    try {
+      const raw = await window.claude.complete({
+        max_tokens: 1200,
+        system: 'You are a kind teacher. Reply with JSON only.',
+        messages: [{ role: 'user', content: 'Mark these answers. For each, say if it is correct and give one short helpful line.\n' +
+          JSON.stringify(marked.map(q => ({ prompt: q.prompt, expected: q.answer, student: q.given }))) +
+          '\nReturn {"marks":[{"correct":true,"note":"..."}]} in the same order.' }]
+      });
+      const m = raw.match(/\{[\s\S]*\}/);
+      const data = JSON.parse(m ? m[0] : raw);
+      const marks = data.marks || [];
+      this.setState({ quizItems: marked.map((q, i) => marks[i]
+        ? { ...q, ok: !!marks[i].correct, verdict: marks[i].correct ? 'Correct' : 'Not quite', feedback: marks[i].note || q.feedback }
+        : q) });
+    } catch (e) {}
+  }
+  finishText() {
+    const te = this.state.textEdit;
+    if (!te) return;
+    const v = (this.state.textDraft || '').trim();
+    if (!v) this.mutateNote(n => ({ ...n, pages: n.pages.map((pg, k) => k === te.page ? pg.filter((it, j) => j !== te.idx) : pg) }));
+    this.setState({ textEdit: null, textDraft: '' });
+  }
+  selAction(kind) {
+    const s = this.state.sel;
+    if (!s) return;
+    const note = this.note();
+    if (kind === 'clear') { this.selRect = null; this.setState({ sel: null }); this.redrawAll(); return; }
+    if (kind === 'copy' || kind === 'cut') this.clipItems = s.idxs.map(k => note.pages[s.page][k]);
+    if (kind === 'cut' || kind === 'delete') {
+      this.mutateNote(n => ({ ...n, pages: n.pages.map((pg, k) => k === s.page ? pg.filter((it, j) => s.idxs.indexOf(j) < 0) : pg) }));
+    }
+    this.selRect = null;
+    this.setState({ sel: null });
+  }
+  pressSizes(e) {
+    if (e.button === 2) return;
+    clearTimeout(this.pressTimer);
+    this.pressTimer = setTimeout(() => this.setState({ pop: 'sizes' }), 420);
+  }
+  chooseInk(value) {
+    const quick = [value, ...this.state.quick.filter(c => c !== value)].slice(0, 4);
+    this.setState({ ink: value, quick, tool: this.state.tool === 'eraser' ? 'pen' : this.state.tool, pop: null });
+  }
+
+  pressTimer = null;
+  startPress(kind, id, title, e) {
+    if (e.button === 2) return;
+    const x = e.clientX, y = e.clientY;
+    this.setState({ pressing: kind + ':' + id });
+    clearTimeout(this.pressTimer);
+    this.pressTimer = setTimeout(() => this.openMenu(kind, id, title, x, y), 460);
+  }
+  endPress() { clearTimeout(this.pressTimer); if (this.state.pressing) this.setState({ pressing: null }); }
+  openMenu(kind, id, title, x, y) {
+    const w = 232, h = kind === 'subject' ? 176 : 216;
+    const left = Math.max(12, Math.min(x - w / 2, window.innerWidth - w - 12));
+    const top = Math.max(12, Math.min(y + 8, window.innerHeight - h - 12));
+    this.setState({ menu: { kind, id, title, left, top }, pressing: null });
+  }
+  componentWillUnmount() { clearTimeout(this.pressTimer); }
+
+  PW = 820; PH = 1100;
+  sizes = [{ label: 'Fine', w: 1.5, dot: '4px' }, { label: 'Medium', w: 2.6, dot: '6px' }, { label: 'Bold', w: 4.5, dot: '9px' }, { label: 'Heavy', w: 7.5, dot: '13px' }];
+
+  papers = [
+    { id: 'squares', label: 'Grid', bg: '#fbfaf8', dark: false, image: 'repeating-linear-gradient(to right, color-mix(in srgb, #2f5ea8 13%, transparent) 0 1px, transparent 1px 26px), repeating-linear-gradient(to bottom, color-mix(in srgb, #2f5ea8 13%, transparent) 0 1px, transparent 1px 26px)', size: '26px 26px' },
+    { id: 'lines', label: 'Ruled', bg: '#fbfaf8', dark: false, image: 'repeating-linear-gradient(to bottom, transparent 0 33px, color-mix(in srgb, #2f5ea8 16%, transparent) 33px 34px)', size: 'auto' },
+    { id: 'dots', label: 'Dotted', bg: '#fbfaf8', dark: false, image: 'radial-gradient(circle at 1px 1px, color-mix(in srgb, #201f1d 26%, transparent) 1.2px, transparent 1.4px)', size: '28px 28px' },
+    { id: 'fine', label: 'Fine grid', bg: '#fbfaf8', dark: false, image: 'repeating-linear-gradient(to right, color-mix(in srgb, #3f7d55 14%, transparent) 0 1px, transparent 1px 13px), repeating-linear-gradient(to bottom, color-mix(in srgb, #3f7d55 14%, transparent) 0 1px, transparent 1px 13px)', size: '13px 13px' },
+    { id: 'plain', label: 'Blank', bg: '#fbfaf8', dark: false, image: 'none', size: 'auto' },
+    { id: 'sepia', label: 'Antique', bg: '#f1e9d9', dark: false, image: 'repeating-linear-gradient(to bottom, transparent 0 33px, color-mix(in srgb, #7d5411 22%, transparent) 33px 34px)', size: 'auto' },
+    { id: 'music', label: 'Manuscript', bg: '#fbfaf8', dark: false, image: 'repeating-linear-gradient(to bottom, color-mix(in srgb, #201f1d 34%, transparent) 0 1px, transparent 1px 12px)', size: '100% 62px' },
+    { id: 'dark', label: 'Blackboard', bg: '#2d2b2b', dark: true, image: 'repeating-linear-gradient(to right, color-mix(in srgb, #f3f2f2 10%, transparent) 0 1px, transparent 1px 26px), repeating-linear-gradient(to bottom, color-mix(in srgb, #f3f2f2 10%, transparent) 0 1px, transparent 1px 26px)', size: '26px 26px' }
+  ];
+  paper(id) { return this.papers.find(p => p.id === id) || this.papers[0]; }
+
+  inkPalette = [
+    { label: 'Black', value: '#201f1d' }, { label: 'Graphite', value: '#605d5d' }, { label: 'Vermilion', value: '#b4322a' },
+    { label: 'Orange', value: '#d4622a' }, { label: 'Gold', value: '#b68235' }, { label: 'Ochre', value: '#9b7232' },
+    { label: 'Green', value: '#3f7d55' }, { label: 'Olive', value: '#7d9a3b' }, { label: 'Teal', value: '#3f7d8c' },
+    { label: 'Blue', value: '#2f5ea8' }, { label: 'Violet', value: '#7a4fa3' }, { label: 'Magenta', value: '#b0417a' },
+    { label: 'Sepia', value: '#7d5411' }, { label: 'Chalk', value: '#f8f4f4' }
+  ];
+
+  rng(seed) { let s = seed >>> 0; return () => { s = (s + 0x6D2B79F5) >>> 0; let t = s; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+
+  genInk(seed, lines, extra) {
+    const r = this.rng(seed), out = [];
+    const push = (pts, color, w) => out.push({ color, w, pts });
+    let x = 620, y = 120, t = [];
+    while (x > 330) { t.push([x, y + Math.sin(x / 9) * 5 * r()]); x -= 9; }
+    push(t, '#201f1d', 3);
+    push([[330, 145], [625, 143]], '#201f1d', 2.5);
+    for (let i = 0; i < lines; i++) {
+      y = 215 + i * 62; x = 700 - r() * 40;
+      const red = extra && i % 4 === 2;
+      while (x > 130 + r() * 120) {
+        const wl = 34 + r() * 92, pts = [];
+        for (let k = 0; k <= wl; k += 7) pts.push([x - k, y + Math.sin((x - k) / 7 + i) * 6.5 * (0.5 + r() * 0.7)]);
+        push(pts, red ? '#b4322a' : '#201f1d', 2.4);
+        x -= wl + 16 + r() * 16;
+      }
+    }
+    if (extra) {
+      const cy = 215 + lines * 62 + 40;
+      push([[240, cy], [560, cy]], '#b68235', 2.2);
+      push([[300, cy + 40], [430, cy + 30], [520, cy + 55]], '#2f5ea8', 2.6);
+    }
+    out.forEach(s => { s.pts = s.pts.map(p => [820 - p[0], p[1]]); });
+    return out;
+  }
+
+  buildSeed() {
+    const mk = (id, title, date, seed, lines, extra, paper) => ({ id, title, date, paper: paper || 'squares', pages: [this.genInk(seed, lines, extra)] });
+    return [
+      { id: 'math', name: 'Mathematics', color: '#b4322a', notes: [
+        mk('m1', 'Lesson 12 · Derivatives', 'Aug 18, 2026', 11, 5, true, 'squares'),
+        mk('m2', 'Lesson 11 · Limits', 'Aug 13, 2026', 27, 4, false, 'squares'),
+        mk('m3', 'Exam drill', 'Aug 9, 2026', 41, 6, true, 'fine') ] },
+      { id: 'phys', name: 'Physics', color: '#2f5ea8', notes: [
+        mk('p1', 'Lesson 7 · Newton laws', 'Aug 17, 2026', 53, 5, true, 'dots'),
+        mk('p2', 'Lab · Friction coefficient', 'Aug 10, 2026', 66, 4, false, 'squares') ] },
+      { id: 'eng', name: 'Literature', color: '#3f7d55', notes: [
+        mk('e1', 'Unit 4 · Vocabulary', 'Aug 16, 2026', 78, 6, false, 'lines') ] },
+      { id: 'hist', name: 'History', color: '#b68235', notes: [
+        mk('h1', 'Lesson 9 · The Great War', 'Aug 15, 2026', 91, 6, true, 'lines'),
+        mk('h2', 'Chapter 3 summary', 'Aug 6, 2026', 104, 5, false, 'sepia') ] },
+      { id: 'bible', name: 'Philosophy', color: '#7a4fa3', notes: [
+        mk('b1', 'Ethics · Book II', 'Aug 12, 2026', 117, 4, false, 'sepia') ] },
+      { id: 'chem', name: 'Chemistry', color: '#3f7d8c', notes: [] }
+    ];
+  }
+
+  key = 'inkwell-notebook-v3';
+  componentDidMount() {
+    let subjects = null;
+    try { const raw = localStorage.getItem(this.key); if (raw) subjects = JSON.parse(raw); } catch (e) {}
+    if (subjects) subjects = subjects.map(s => ({ ...s, notes: s.notes.map(n => n.pages ? n : { ...n, pages: [n.strokes || []] }) }));
+    this.setState({ subjects: subjects && subjects.length ? subjects : this.buildSeed() });
+  }
+  save(subjects) { try { localStorage.setItem(this.key, JSON.stringify(subjects)); } catch (e) {} }
+  setSubjects(subjects) { this.save(subjects); this.setState({ subjects }); }
+  componentDidUpdate() { this.redrawAll(); }
+
+  // ---------- drawing ----------
+  els = {};
+  cur = null; curPage = 0; lastPage = 0;
+
+  ctxOf(i) { const c = this.els[i]; if (!c) return null; const ctx = c.getContext('2d'); ctx.setTransform(2, 0, 0, 2, 0, 0); return ctx; }
+  styleFor(ctx, s) { ctx.strokeStyle = s.color; ctx.lineWidth = s.w; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.globalAlpha = s.marker ? 0.42 : 1;
+    if (s.marker) { ctx.lineCap = 'butt'; ctx.lineJoin = 'round'; ctx.globalCompositeOperation = 'multiply'; } else { ctx.globalCompositeOperation = 'source-over'; } }
+  imgCache = {};
+  imageFor(src) {
+    if (this.imgCache[src]) return this.imgCache[src];
+    const img = new Image();
+    img.onload = () => this.redrawAll();
+    img.src = src;
+    this.imgCache[src] = img;
+    return img;
+  }
+  bbox(it) {
+    if (it.type === 'img') return [it.x, it.y, it.x + it.w, it.y + it.h];
+    if (it.type === 'text') return [it.x, it.y - it.size, it.x + Math.max(40, it.text.length * it.size * 0.52), it.y + 6];
+    const xs = it.pts.map(p => p[0]), ys = it.pts.map(p => p[1]);
+    return [Math.min.apply(null, xs), Math.min.apply(null, ys), Math.max.apply(null, xs), Math.max.apply(null, ys)];
+  }
+  drawStroke(ctx, s) {
+    if (s.type === 'img') {
+      const img = this.imageFor(s.src);
+      if (img.complete && img.naturalWidth) ctx.drawImage(img, s.x, s.y, s.w, s.h);
+      else { ctx.strokeStyle = 'var'; ctx.strokeStyle = '#bab6b6'; ctx.lineWidth = 1; ctx.strokeRect(s.x, s.y, s.w, s.h); }
+      return;
+    }
+    if (s.type === 'text') {
+      ctx.fillStyle = s.color; ctx.globalAlpha = 1;
+      ctx.font = '400 ' + s.size + 'px "Frank Ruhl Libre", serif';
+      ctx.direction = 'ltr'; ctx.textAlign = 'left';
+      s.text.split('\n').forEach((line, k) => ctx.fillText(line, s.x, s.y + k * s.size * 1.35));
+      return;
+    }
+    if (!s.pts || !s.pts.length) return;
+    this.styleFor(ctx, s);
+    ctx.beginPath(); ctx.moveTo(s.pts[0][0], s.pts[0][1]);
+    for (let i = 1; i < s.pts.length; i++) ctx.lineTo(s.pts[i][0], s.pts[i][1]);
+    if (s.pts.length === 1) ctx.lineTo(s.pts[0][0] + 0.1, s.pts[0][1]);
+    ctx.stroke(); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
+  }
+  redrawAll() {
+    const n = this.note(); if (!n) return;
+    n.pages.forEach((strokes, i) => {
+      const ctx = this.ctxOf(i); if (!ctx) return;
+      ctx.clearRect(0, 0, this.PW, this.PH);
+      strokes.forEach(s => this.drawStroke(ctx, s));
+      if (this.cur && this.curPage === i) this.drawStroke(ctx, this.cur);
+      const r = this.selRect;
+      if (r && r.page === i) {
+        ctx.save(); ctx.setLineDash([7, 5]); ctx.strokeStyle = '#b68235'; ctx.lineWidth = 1.4;
+        ctx.strokeRect(Math.min(r.x0, r.x1), Math.min(r.y0, r.y1), Math.abs(r.x1 - r.x0), Math.abs(r.y1 - r.y0));
+        ctx.restore();
+      }
+    });
+  }
+  pos(e) { const r = e.currentTarget.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; }
+  strokeWidth() {
+    const base = this.sizes[this.state.size].w;
+    if (this.state.tool === 'marker') return base * 8;
+    if (this.state.tool === 'pencil') return base * 0.75;
+    return base;
+  }
+
+  down(i, e) {
+    const tool = this.state.tool;
+    if (tool === 'hand') return;
+    e.currentTarget.setPointerCapture && e.currentTarget.setPointerCapture(e.pointerId);
+    this.curPage = i; this.lastPage = i;
+    if (this.state.pageSel !== i) this.setState({ pageSel: i });
+    if (tool === 'text') {
+      const p = this.pos(e);
+      const note = this.note(); if (!note) return;
+      const idx = note.pages[i].length;
+      this.mutateNote(n => ({ ...n, pages: n.pages.map((pg, k) => k === i ? [...pg, { type: 'text', x: p[0], y: p[1], text: '', color: this.state.ink, size: 26 }] : pg) }));
+      this.setState({ textEdit: { page: i, idx }, textDraft: '', sel: null });
+      return;
+    }
+    if (tool === 'lasso') {
+      const p = this.pos(e);
+      this.selRect = { page: i, x0: p[0], y0: p[1], x1: p[0], y1: p[1] };
+      this.lassoing = true;
+      this.setState({ sel: null });
+      return;
+    }
+    if (tool === 'eraser') { this.erasing = true; this.erase(i, this.pos(e)); return; }
+    this.cur = { color: this.state.ink, w: this.strokeWidth(), marker: this.state.tool === 'marker', pts: [this.pos(e)] };
+    this.redrawAll();
+  }
+  move(i, e) {
+    if (this.lassoing && this.selRect && this.selRect.page === i) {
+      const p = this.pos(e); this.selRect.x1 = p[0]; this.selRect.y1 = p[1]; this.redrawAll(); return;
+    }
+    if (this.erasing) { if (this.curPage === i) this.erase(i, this.pos(e)); return; }
+    if (!this.cur || this.curPage !== i) return;
+    this.cur.pts.push(this.pos(e));
+    if (this.cur.marker) { this.redrawAll(); return; }
+    const ctx = this.ctxOf(i); if (!ctx) return;
+    const p = this.cur.pts, n = p.length;
+    this.styleFor(ctx, this.cur);
+    ctx.beginPath(); ctx.moveTo(p[n - 2][0], p[n - 2][1]); ctx.lineTo(p[n - 1][0], p[n - 1][1]); ctx.stroke(); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
+  }
+  up() {
+    this.erasing = false;
+    if (this.lassoing) {
+      this.lassoing = false;
+      const r = this.selRect, note = this.note();
+      if (!r || !note) return;
+      const x0 = Math.min(r.x0, r.x1), x1 = Math.max(r.x0, r.x1), y0 = Math.min(r.y0, r.y1), y1 = Math.max(r.y0, r.y1);
+      if (x1 - x0 < 12 || y1 - y0 < 12) { this.selRect = null; this.redrawAll(); return; }
+      const idxs = [];
+      note.pages[r.page].forEach((it, k) => {
+        const b = this.bbox(it);
+        if (b[0] >= x0 - 2 && b[1] >= y0 - 2 && b[2] <= x1 + 2 && b[3] <= y1 + 2) idxs.push(k);
+      });
+      this.setState({ sel: { page: r.page, idxs, x0, y0, x1, y1 } });
+      return;
+    }
+    if (!this.cur) return;
+    const s = this.cur, i = this.curPage; this.cur = null; this.undone = [];
+    const note = this.note(); if (!note) return;
+    const deep = s.pts.some(p => p[1] > this.PH - 90);
+    const grow = deep && i === note.pages.length - 1;
+    this.mutateNote(n => {
+      const pages = n.pages.map((pg, k) => k === i ? [...pg, s] : pg);
+      return { ...n, pages: grow ? [...pages, []] : pages };
+    });
+  }
+  erase(i, pt) {
+    const n = this.note(); if (!n) return;
+    const kept = n.pages[i].filter(s => s.pts
+      ? !s.pts.some(p => Math.abs(p[0] - pt[0]) < 14 && Math.abs(p[1] - pt[1]) < 14)
+      : (() => { const b = this.bbox(s); return !(pt[0] > b[0] && pt[0] < b[2] && pt[1] > b[1] && pt[1] < b[3]); })());
+    if (kept.length !== n.pages[i].length) this.mutateNote(x => ({ ...x, pages: x.pages.map((pg, k) => k === i ? kept : pg) }));
+  }
+
+  // ---------- model ----------
+  subject() { const s = this.state.subjects; return s && s.length ? s[Math.min(this.state.active, s.length - 1)] : null; }
+  note() { const s = this.subject(); return s ? s.notes.find(n => n.id === this.state.openId) || null : null; }
+  mutateNote(fn) {
+    const subjects = this.state.subjects.map((s, i) => i !== this.state.active ? s : { ...s, notes: s.notes.map(n => n.id === this.state.openId ? fn(n) : n) });
+    this.setSubjects(subjects);
+  }
+  todayLabel() {
+    const m = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const d = new Date(); return m[d.getMonth()] + ' ' + d.getDate() + ', ' + d.getFullYear();
+  }
+  pathsFor(strokes) {
+    return (strokes || []).filter(s => s.pts && s.pts.length).slice(0, 500).map((s, i) => ({
+      key: i, color: s.color, w: s.w, o: s.marker || s.w > 9 ? 0.42 : 1,
+      d: s.pts.map((p, k) => (k ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' ')
+    }));
+  }
+
+  renderVals() {
+    const subjects = this.state.subjects || [];
+    const subj = this.subject();
+    const openNote = this.note();
+    const st = this.state;
+    const paper = this.paper(openNote ? openNote.paper : 'squares');
+    const q = st.query.trim();
+    const sel = st.selected;
+
+    const ql = q.toLowerCase();
+    const hit = (n, s) => !ql || n.title.toLowerCase().indexOf(ql) >= 0 || s.name.toLowerCase().indexOf(ql) >= 0
+      || n.date.toLowerCase().indexOf(ql) >= 0
+      || n.pages.some(pg => pg.some(it => it.type === 'text' && it.text && it.text.toLowerCase().indexOf(ql) >= 0));
+    const source = [];
+    if (ql) subjects.forEach((s, si) => s.notes.forEach(n => { if (hit(n, s)) source.push({ n, si, sname: s.name }); }));
+    else if (subj) subj.notes.forEach(n => source.push({ n, si: st.active, sname: subj.name }));
+    const notes = source.map(entry => {
+      const n = entry.n, si = entry.si;
+      const picked = sel.indexOf(n.id) >= 0;
+      const p = this.paper(n.paper);
+      return {
+        id: n.id, title: n.title, date: ql ? (entry.sname + ' · ' + n.date) : n.date,
+        paths: this.pathsFor(n.pages[0]),
+        paperBg: p.bg, paperImage: p.image, paperSize: p.size,
+        pageLabel: n.pages.length + (n.pages.length === 1 ? ' page' : ' pages'),
+        cardBorder: picked ? 'var(--color-accent)' : 'var(--color-divider)',
+        mark: picked ? '✓' : '', markBg: picked ? 'var(--color-accent-200)' : 'color-mix(in srgb, #fbfaf8 85%, transparent)',
+        markBorder: picked ? 'var(--color-accent)' : 'var(--color-neutral-500)',
+        markColor: 'var(--color-accent-800)',
+        click: () => {
+          if (st.menu) return;
+          if (!st.editing) { this.setState({ active: si, openId: n.id }); return; }
+          this.setState({ selected: picked ? sel.filter(x => x !== n.id) : [...sel, n.id] });
+        },
+        press: (e) => this.startPress('note', n.id, n.title, e),
+        release: () => this.endPress(),
+        context: (e) => { e.preventDefault(); this.openMenu('note', n.id, n.title, e.clientX, e.clientY); },
+        scale: st.pressing === 'note:' + n.id ? 'scale(0.965)' : 'none',
+        renaming: st.renameNote === n.id, showName: st.renameNote !== n.id, draft: st.draft,
+        rename: () => this.setState({ renameNote: n.id, renameSubj: null, draft: n.title }),
+        onDraft: (e) => this.setState({ draft: e.target.value }),
+        commit: () => {
+          const v = st.draft.trim();
+          if (v) this.setSubjects(subjects.map((s, i) => i !== si ? s : { ...s, notes: s.notes.map(x => x.id === n.id ? { ...x, title: v } : x) }));
+          this.setState({ renameNote: null });
+        },
+        commitKey: (e) => {
+          if (e.key === 'Escape') { this.setState({ renameNote: null }); return; }
+          if (e.key !== 'Enter') return;
+          const v = st.draft.trim();
+          if (v) this.setSubjects(subjects.map((s, i) => i !== si ? s : { ...s, notes: s.notes.map(x => x.id === n.id ? { ...x, title: v } : x) }));
+          this.setState({ renameNote: null });
+        }
+      };
+    });
+
+    return {
+      inLibrary: !openNote, inEditor: !!openNote,
+      query: st.query, onQuery: (e) => this.setState({ query: e.target.value }),
+      adding: st.adding, newName: st.newName,
+      startAdd: () => this.setState({ adding: !st.adding, newName: '' }),
+      onNewName: (e) => this.setState({ newName: e.target.value }),
+      onNewKey: (e) => {
+        if (e.key === 'Escape') { this.setState({ adding: false }); return; }
+        if (e.key !== 'Enter' || !st.newName.trim()) return;
+        const palette = ['#b4322a', '#2f5ea8', '#3f7d55', '#b68235', '#7a4fa3', '#3f7d8c', '#b0417a', '#d4622a'];
+        const next = [...subjects, { id: 'sub' + Date.now(), name: st.newName.trim(), color: palette[subjects.length % palette.length], notes: [] }];
+        this.save(next);
+        this.setState({ subjects: next, active: next.length - 1, adding: false, newName: '', selected: [] });
+      },
+
+      subjectList: subjects.map((s, i) => ({
+        name: s.name, color: s.color, count: s.notes.length,
+        bg: i === st.active ? 'var(--color-accent-100)' : 'transparent',
+        border: i === st.active ? 'var(--color-accent-300)' : 'transparent',
+        open: () => this.setState({ active: i, openId: null, selected: [], editing: false }),
+        renaming: st.renameSubj === s.id, showName: st.renameSubj !== s.id, draft: st.draft,
+        press: (e) => this.startPress('subject', s.id, s.name, e),
+        release: () => this.endPress(),
+        context: (e) => { e.preventDefault(); this.openMenu('subject', s.id, s.name, e.clientX, e.clientY); },
+        scale: st.pressing === 'subject:' + s.id ? 'scale(0.975)' : 'none',
+        rename: () => this.setState({ renameSubj: s.id, renameNote: null, draft: s.name }),
+        onDraft: (e) => this.setState({ draft: e.target.value }),
+        commit: () => {
+          const v = st.draft.trim();
+          if (v) this.setSubjects(subjects.map(x => x.id === s.id ? { ...x, name: v } : x));
+          this.setState({ renameSubj: null });
+        },
+        commitKey: (e) => {
+          if (e.key === 'Escape') { this.setState({ renameSubj: null }); return; }
+          if (e.key !== 'Enter') return;
+          const v = st.draft.trim();
+          if (v) this.setSubjects(subjects.map(x => x.id === s.id ? { ...x, name: v } : x));
+          this.setState({ renameSubj: null });
+        },
+        open2: null
+      })),
+
+      menuOpen: !!st.menu,
+      menuTop: st.menu ? st.menu.top + 'px' : '0px',
+      menuLeft: st.menu ? st.menu.left + 'px' : '0px',
+      menuKind: st.menu ? (st.menu.kind === 'subject' ? 'Subject' : 'Lesson') : '',
+      menuTitle: st.menu ? st.menu.title : '',
+      closeMenu: () => this.setState({ menu: null }),
+      menuItems: !st.menu ? [] : (st.menu.kind === 'subject' ? [
+        { label: 'Rename', glyph: 'A', color: 'var(--color-text)', act: () => this.setState({ menu: null, renameSubj: st.menu.id, renameNote: null, draft: st.menu.title }) },
+        { label: 'New lesson here', glyph: '+', color: 'var(--color-text)', act: () => {
+            const i = subjects.findIndex(x => x.id === st.menu.id);
+            const id = 'n' + Date.now();
+            const next = subjects.map((s, k) => k !== i ? s : { ...s, notes: [{ id, title: 'New lesson', date: this.todayLabel(), paper: 'squares', pages: [[]] }, ...s.notes] });
+            this.save(next);
+            this.setState({ subjects: next, active: i, openId: id, menu: null, editing: false, selected: [] });
+          } },
+        { label: 'Delete subject', glyph: '🗑', color: '#b4322a', act: () => {
+            const next = subjects.filter(x => x.id !== st.menu.id);
+            this.save(next);
+            this.setState({ subjects: next, menu: null, active: Math.max(0, Math.min(st.active, next.length - 1)), openId: null, selected: [] });
+          } }
+      ] : [
+        { label: 'Open lesson', glyph: '→', color: 'var(--color-text)', act: () => this.setState({ openId: st.menu.id, menu: null }) },
+        { label: 'Rename', glyph: 'A', color: 'var(--color-text)', act: () => this.setState({ menu: null, renameNote: st.menu.id, renameSubj: null, draft: st.menu.title }) },
+        { label: 'Duplicate', glyph: '⧉', color: 'var(--color-text)', act: () => {
+            const next = subjects.map((s, i) => {
+              if (i !== st.active) return s;
+              const src = s.notes.find(n => n.id === st.menu.id);
+              const copy = { ...src, id: 'n' + Date.now(), title: src.title + ' · copy', date: this.todayLabel(), pages: src.pages.map(p => p.slice()) };
+              const at = s.notes.indexOf(src);
+              return { ...s, notes: [...s.notes.slice(0, at + 1), copy, ...s.notes.slice(at + 1)] };
+            });
+            this.save(next); this.setState({ subjects: next, menu: null });
+          } },
+        { label: 'Select for bulk delete', glyph: '✓', color: 'var(--color-text)', act: () => this.setState({ menu: null, editing: true, selected: [st.menu.id] }) },
+        { label: 'Delete lesson', glyph: '🗑', color: '#b4322a', act: () => {
+            const next = subjects.map((s, i) => i !== st.active ? s : { ...s, notes: s.notes.filter(n => n.id !== st.menu.id) });
+            this.save(next); this.setState({ subjects: next, menu: null, selected: sel.filter(x => x !== st.menu.id) });
+          } }
+      ]),
+
+      quizOpen: !!st.quizOpen,
+      quizSubject: openNote ? openNote.title : (subj ? subj.name : ''),
+      quizSetup: st.quizPhase !== 'run',
+      quizRunning: st.quizPhase === 'run',
+      openQuiz: () => this.setState({ quizOpen: true, pop: null, quizPhase: 'setup', quizItems: [], quizHint: '',
+        quizSource: st.quizSource || (openNote ? this.quizTextFromNote(openNote) : this.quizTextFrom(subj)) }),
+      closeQuiz: () => this.setState({ quizOpen: false }),
+      quizSource: st.quizSource || '',
+      onQuizSource: (e) => this.setState({ quizSource: e.target.value }),
+      quizModes: [
+        { id: 'blank', label: 'Fill the blank' }, { id: 'choice', label: 'Multiple choice' }, { id: 'open', label: 'Open questions' }
+      ].map(m => ({ label: m.label, pick: () => this.setState({ quizMode: m.id }),
+        bg: (st.quizMode || 'blank') === m.id ? 'var(--color-accent-100)' : 'transparent',
+        border: (st.quizMode || 'blank') === m.id ? 'var(--color-accent)' : 'var(--color-divider)' })),
+      quizCounts: [5, 8, 12].map(c => ({ label: c, pick: () => this.setState({ quizCount: c }),
+        bg: (st.quizCount || 5) === c ? 'var(--color-accent-100)' : 'transparent',
+        border: (st.quizCount || 5) === c ? 'var(--color-accent)' : 'var(--color-divider)' })),
+      generateQuiz: () => this.generate(),
+      generateLabel: st.quizBusy ? 'Writing…' : 'Build my test',
+      quizHint: st.quizHint || 'Claude writes the questions from your material.',
+      checkQuiz: () => this.check(),
+      checkLabel: st.quizBusy ? 'Marking…' : 'Check answers',
+      resetQuiz: () => this.setState({ quizPhase: 'setup', quizItems: [], quizHint: '' }),
+      quizScore: (() => {
+        const items = st.quizItems || [];
+        const done = items.filter(q => q.ok !== null && q.ok !== undefined);
+        return done.length ? done.filter(q => q.ok).length + ' / ' + items.length + ' correct' : '';
+      })(),
+      quizItems: (st.quizItems || []).map((q, i) => ({
+        num: 'Question ' + (i + 1),
+        prompt: q.prompt,
+        hasChoices: !!q.choices,
+        hasInput: !q.choices,
+        answer: q.given || '',
+        onAnswer: (e) => { const v = e.target.value; this.setState({ quizItems: (this.state.quizItems || []).map((x, k) => k === i ? { ...x, given: v } : x) }); },
+        choices: (q.choices || []).map(c => ({
+          label: c,
+          bg: q.given === c ? 'var(--color-accent-100)' : 'transparent',
+          border: q.given === c ? 'var(--color-accent)' : 'var(--color-divider)',
+          pick: () => this.setState({ quizItems: (this.state.quizItems || []).map((x, k) => k === i ? { ...x, given: c } : x) })
+        })),
+        marked: q.ok !== null && q.ok !== undefined,
+        verdict: q.verdict,
+        feedback: q.feedback,
+        markColor: q.ok ? '#3f7d55' : '#b4322a'
+      })),
+      activeName: q ? ('“' + q + '”') : (subj ? subj.name : ''),
+      activeMeta: q ? (notes.length + (notes.length === 1 ? ' matching lesson' : ' matching lessons') + ' across all subjects') : subj ? (subj.notes.length + ' lessons · updated ' + (subj.notes[0] ? subj.notes[0].date : '—')) : '',
+      isEmpty: notes.length === 0,
+      headKicker: q ? 'Search' : 'Subject',
+      notes,
+      editing: st.editing,
+      editLabel: st.editing ? 'Done' : 'Edit',
+      deleteLabel: sel.length ? 'Delete ' + sel.length + ' lesson' + (sel.length > 1 ? 's' : '') : 'Select lessons to delete',
+      toggleEdit: () => this.setState({ editing: !st.editing, selected: [] }),
+      deleteSelected: () => {
+        if (!sel.length) return;
+        const next = subjects.map((s, i) => i !== st.active ? s : { ...s, notes: s.notes.filter(n => sel.indexOf(n.id) < 0) });
+        this.save(next);
+        this.setState({ subjects: next, selected: [] });
+      },
+      newNote: () => {
+        const id = 'n' + Date.now();
+        const next = subjects.map((s, i) => i !== st.active ? s : { ...s, notes: [{ id, title: 'New lesson', date: this.todayLabel(), paper: 'squares', pages: [[]] }, ...s.notes] });
+        this.save(next);
+        this.setState({ subjects: next, openId: id, tool: 'pen', editing: false, selected: [] });
+      },
+
+      // editor
+      paperBg: paper.bg, paperImage: paper.image, paperSize: paper.size,
+      insertOpen: st.pop === 'insert',
+      fileRef: this.fileRef,
+      pickImage: () => { this.setState({ pop: null }); if (this.fileRef.current) this.fileRef.current.click(); },
+      onFile: (e) => { const f = e.target.files && e.target.files[0]; if (f) this.insertImage(f); e.target.value = ''; },
+      insertText: () => this.setState({ pop: null, tool: 'text' }),
+      insertNewPage: () => { this.setState({ pop: null }); this.mutateNote(n => ({ ...n, pages: [...n.pages, []] })); },
+      textDraft: st.textDraft,
+      onTextDraft: (e) => {
+        const v = e.target.value;
+        const te = st.textEdit; if (!te) return;
+        this.setState({ textDraft: v });
+        this.mutateNote(n => ({ ...n, pages: n.pages.map((pg, k) => k === te.page ? pg.map((it, j) => j === te.idx ? { ...it, text: v } : it) : pg) }));
+      },
+      onTextKey: (e) => { if (e.key === 'Enter' || e.key === 'Escape') this.finishText(); },
+      commitText: () => this.finishText(),
+      selActions: [
+        { label: 'Cut', act: () => this.selAction('cut') },
+        { label: 'Copy', act: () => this.selAction('copy') },
+        { label: 'Delete', act: () => this.selAction('delete'), color: '#b4322a' },
+        { label: 'Cancel', act: () => this.selAction('clear') }
+      ].map(a => ({ ...a, color: a.color || 'var(--color-text)' })),
+      pasteHere: () => {
+        if (!this.clipItems) return;
+        const i = Math.min(this.lastPage, openNote.pages.length - 1);
+        this.mutateNote(n => ({ ...n, pages: n.pages.map((pg, k) => k === i
+          ? [...pg, ...this.clipItems.map(it => it.pts
+            ? { ...it, pts: it.pts.map(p => [p[0] + 24, p[1] + 24]) }
+            : { ...it, x: it.x + 24, y: it.y + 24 })] : pg) }));
+      },
+      hasClipItems: !!this.clipItems,
+      pages: openNote ? openNote.pages.map((pg, i) => ({
+        num: (i + 1) + ' / ' + openNote.pages.length,
+        editingText: !!st.textEdit && st.textEdit.page === i,
+        textTop: st.textEdit ? (st.textEdit.page === i ? (pg[st.textEdit.idx] ? pg[st.textEdit.idx].y - 30 : 0) + 'px' : '0px') : '0px',
+        textLeft: st.textEdit ? (st.textEdit.page === i ? Math.max(8, (pg[st.textEdit.idx] ? pg[st.textEdit.idx].x - 320 : 0)) + 'px' : '0px') : '0px',
+        hasSel: !!st.sel && st.sel.page === i,
+        selTop: st.sel ? (st.sel.y1 + 10) + 'px' : '0px',
+        selLeft: st.sel ? Math.max(8, st.sel.x0) + 'px' : '0px',
+        selCount: st.sel ? st.sel.idxs.length : 0,
+        numColor: paper.dark ? 'var(--color-neutral-400)' : 'var(--color-neutral-600)',
+        ref: (el) => { if (el) { this.els[i] = el; this.redrawAll(); } else { delete this.els[i]; } },
+        down: (e) => this.down(i, e), move: (e) => this.move(i, e), up: () => this.up()
+      })) : [],
+      addPage: () => this.mutateNote(n => ({ ...n, pages: [...n.pages, this.template ? this.template.slice() : []] })),
+      scrollRef: this.scrollRef,
+      pagesOpen: st.pagesOpen,
+      pagesBg: st.pagesOpen ? 'var(--color-accent-100)' : 'transparent',
+      pagesColor: st.pagesOpen ? 'var(--color-accent-700)' : 'var(--color-text)',
+      togglePages: () => this.setState({ pagesOpen: !st.pagesOpen, pop: null }),
+      pageQuery: st.pageQuery,
+      onPageQuery: (e) => this.setState({ pageQuery: e.target.value }),
+      thumbs: openNote ? openNote.pages.map((pg, i) => ({
+        num: i + 1,
+        numColor: st.pageSel === i ? 'var(--color-accent-700)' : 'var(--color-neutral-600)',
+        border: st.pageSel === i ? 'var(--color-accent)' : 'var(--color-divider)',
+        paths: this.pathsFor(pg),
+        go: () => this.goToPage(i),
+        openMenu: (e) => {
+          e.stopPropagation();
+          const r = e.currentTarget.getBoundingClientRect();
+          const w = 246, h = 330;
+          this.setState({ pageMenu: { page: i,
+            left: Math.max(12, Math.min(r.left - w - 8, window.innerWidth - w - 12)),
+            top: Math.max(12, Math.min(r.top - h / 2, window.innerHeight - h - 12)) } });
+        }
+      })) : [],
+      pageMenuOpen: !!st.pageMenu,
+      pageMenuTitle: st.pageMenu ? 'Page ' + (st.pageMenu.page + 1) : '',
+      pageMenuTop: st.pageMenu ? st.pageMenu.top + 'px' : '0px',
+      pageMenuLeft: st.pageMenu ? st.pageMenu.left + 'px' : '0px',
+      closePageMenu: () => this.setState({ pageMenu: null }),
+      stopPd: (e) => e.stopPropagation(),
+      pageMenuItems: !st.pageMenu ? [] : (() => {
+        const i = st.pageMenu.page;
+        const close = () => this.setState({ pageMenu: null });
+        const items = [
+          { label: 'Insert', icon: 'M6 3.5h7.5L18 8v12.5H6zM14 4v4.5h4M12 12v5M9.5 14.5h5', color: 'var(--color-text)',
+            act: () => { close(); this.mutateNote(n => ({ ...n, pages: [...n.pages.slice(0, i + 1), this.template ? this.template.slice() : [], ...n.pages.slice(i + 1)] })); } },
+          { label: 'Cut', icon: 'M6.5 4l11 12M17.5 4l-11 12M6.5 20a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5M17.5 20a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5', color: 'var(--color-text)',
+            act: () => { close(); this.clip = (openNote.pages[i] || []).slice(); this.mutateNote(n => n.pages.length < 2 ? { ...n, pages: [[]] } : { ...n, pages: n.pages.filter((p, k) => k !== i) }); } },
+          { label: 'Copy', icon: 'M9 9h10.5v10.5H9zM15 5.5H4.5V16', color: 'var(--color-text)',
+            act: () => { close(); this.clip = (openNote.pages[i] || []).slice(); } },
+          { label: 'Duplicate', icon: 'M9 4.5h10.5V15M15 9v10.5H4.5V9z', color: 'var(--color-text)',
+            act: () => { close(); this.mutateNote(n => ({ ...n, pages: [...n.pages.slice(0, i + 1), n.pages[i].slice(), ...n.pages.slice(i + 1)] })); } },
+          { label: 'Create template', icon: 'M4.5 5.5h15v13h-15zM4.5 10h15M10 10v8.5', color: 'var(--color-text)',
+            act: () => { close(); this.template = (openNote.pages[i] || []).slice(); } },
+          { label: 'Clear page', icon: 'M5 19h14M8 15.5l7.5-7.5a2 2 0 0 1 2.8 2.8L10.8 18.3H8v-2.8z', color: 'var(--color-text)',
+            act: () => { close(); this.mutateNote(n => ({ ...n, pages: n.pages.map((p, k) => k === i ? [] : p) })); } },
+          { label: 'Delete', icon: 'M4.5 7h15M9.5 7V4.5h5V7M6.5 7l1 13h9l1-13M10 11v5.5M14 11v5.5', color: '#b4322a',
+            act: () => { close(); this.mutateNote(n => n.pages.length < 2 ? { ...n, pages: [[]] } : { ...n, pages: n.pages.filter((p, k) => k !== i) }); } }
+        ];
+        if (this.clip) items.splice(3, 0, { label: 'Paste', icon: 'M8 4.5h8v3H8zM6 6.5H4.5V20h15V6.5H18', color: 'var(--color-text)',
+          act: () => { this.setState({ pageMenu: null }); this.mutateNote(n => ({ ...n, pages: [...n.pages.slice(0, i + 1), this.clip.slice(), ...n.pages.slice(i + 1)] })); } });
+        return items;
+      })(),
+      noteTitle: openNote ? openNote.title : '',
+      noteMeta: openNote ? (subj.name + ' · ' + openNote.date + ' · ' + openNote.pages.length + (openNote.pages.length === 1 ? ' page' : ' pages')) : '',
+      onTitle: (e) => { const v = e.target.value; this.mutateNote(n => ({ ...n, title: v })); },
+      closeNote: () => this.setState({ openId: null }),
+      undo: () => {
+        if (!openNote) return;
+        const i = Math.min(this.lastPage, openNote.pages.length - 1);
+        const last = openNote.pages[i][openNote.pages[i].length - 1];
+        if (last) this.undone.push({ page: i, stroke: last });
+        this.mutateNote(n => ({ ...n, pages: n.pages.map((pg, k) => k === i ? pg.slice(0, -1) : pg) }));
+      },
+      clearPage: () => this.mutateNote(n => ({ ...n, pages: n.pages.map((pg, i) => i === Math.min(this.lastPage, n.pages.length - 1) ? [] : pg) })),
+      tools: [
+        { id: 'pen', label: 'Pen', icon: 'M4 20l1.1-4.1L15.6 5.4a2.3 2.3 0 0 1 3.2 3.2L8.3 19 4 20zM14.2 6.8l3 3M5.1 15.9l3 3' },
+        { id: 'pencil', label: 'Pencil', icon: 'M4.4 19.6l1-4L14.9 6l3 3-9.5 9.6-4 1zM4.4 19.6l2.2-.6-1.6-1.6-.6 2.2M14.9 6l1.8-1.8a1.6 1.6 0 0 1 2.3 0l.7.7a1.6 1.6 0 0 1 0 2.3L17.9 9' },
+        { id: 'marker', label: 'Marker', icon: 'M3.5 20.5h8M6 17.6h5.6l6.8-6.8a2.4 2.4 0 0 0 0-3.4l-1.3-1.3a2.4 2.4 0 0 0-3.4 0L6.9 12.9 6 17.6zM13.4 7.4l3.9 3.9' },
+        { id: 'eraser', label: 'Eraser', icon: 'M4 20.5h16M4.9 15.1l6.4-6.4a2.1 2.1 0 0 1 3 0l3.7 3.7a2.1 2.1 0 0 1 0 3l-3.5 3.5H8.4L4.9 15.4a.2.2 0 0 1 0-.3zM9.6 10.4l6.7 6.7' },
+        { id: 'text', label: 'Text', icon: 'M4 5.5h9M8.5 5.5v13M14 10.5h6M17 10.5v8' },
+        { id: 'lasso', label: 'Select', icon: 'M4.5 8.5V5.5h3M19.5 8.5V5.5h-3M4.5 15.5v3h3M19.5 15.5v3h-3M10.5 5.5h3M10.5 18.5h3M4.5 10.5v3M19.5 10.5v3' },
+        { id: 'addpage', label: 'Insert', icon: 'M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0M12 7.6v8.8M7.6 12h8.8' },
+        { id: 'mic', label: 'Voice', icon: 'M12 4.2a2.9 2.9 0 0 1 2.9 2.9v4.6a2.9 2.9 0 0 1-5.8 0V7.1A2.9 2.9 0 0 1 12 4.2M5.8 11.4a6.2 6.2 0 0 0 12.4 0M12 17.8V20.5' },
+        { id: 'div', divider: true },
+        { id: 'hand', label: 'Scroll', icon: 'M8.2 12.4V6.8a1.6 1.6 0 0 1 3.2 0v5.2m0-1.6V5.4a1.6 1.6 0 0 1 3.2 0v5.4m0-1V7.5a1.6 1.6 0 0 1 3.2 0V15a5.5 5.5 0 0 1-5.5 5.5h-1.4A5 5 0 0 1 5.9 15.5v-3.1a1.6 1.6 0 0 1 3.2 0' }
+      ].map(t => {
+        const on = st.tool === t.id || (t.id === 'more' && st.pop === 'sizes');
+        return { ...t, isDivider: !!t.divider, isTool: !t.divider,
+          line: on ? 'var(--color-accent)' : 'transparent',
+          color: on ? 'var(--color-accent-700)' : 'var(--color-neutral-800)',
+          lift: on ? 'translateY(-1px)' : 'none',
+          press: (e) => { if (t.id === 'pen' || t.id === 'pencil' || t.id === 'marker') this.pressSizes(e); },
+          release: () => this.endPress(),
+          pick: () => {
+            if (t.id === 'addpage') { this.setState({ pop: st.pop === 'insert' ? null : 'insert' }); return; }
+            if (t.id === 'more') { this.setState({ pop: st.pop === 'sizes' ? null : 'sizes' }); return; }
+            if (t.id === 'mic') { this.setState({ pop: null }); return; }
+            this.setState({ tool: t.id, pop: null, sel: null });
+          } };
+      }),
+      sizesOpen: st.pop === 'sizes',
+      sizes: this.sizes.map((z, i) => ({
+        label: z.label, dot: z.dot, pick: () => this.setState({ size: i, pop: null }),
+        bg: st.size === i ? 'var(--color-accent-100)' : 'transparent'
+      })),
+      ink: st.ink,
+      quickInks: st.quick.map(v => {
+        const found = this.inkPalette.find(c => c.value === v) || { label: '', value: v };
+        return { label: found.label, value: v,
+          active: st.ink === v,
+          shadow: st.ink === v
+            ? '0 0 0 1px color-mix(in srgb, #201f1d 12%, transparent), 0 0 0 2px #fbfaf8, 0 0 0 4px var(--color-accent)'
+            : '0 0 0 1px color-mix(in srgb, #201f1d 14%, transparent)',
+          ring: st.ink === v ? 'var(--color-accent)' : 'transparent',
+          scale: st.pressing === 'ink:' + v ? 'scale(1.22)' : 'none',
+          pick: () => { if (st.pop !== 'palette') this.chooseInk(v); },
+          press: (e) => this.pressColor(v, e),
+          release: () => this.endPress() };
+      }),
+      allInks: this.inkPalette.map(c => ({
+        ...c,
+        shadow: st.ink === c.value
+          ? '0 0 0 1px color-mix(in srgb, #201f1d 12%, transparent), 0 0 0 2px #fbfaf8, 0 0 0 4px var(--color-accent)'
+          : '0 0 0 1px color-mix(in srgb, #201f1d 14%, transparent)',
+        pick: () => this.chooseInk(c.value)
+      })),
+      paletteOpen: st.pop === 'palette',
+      moreOpen: st.pop === 'more',
+      templateOpen: st.pop === 'template',
+      viewOpen: st.pop === 'view',
+      openTemplate: () => this.setState({ pop: 'template' }),
+      openView: () => this.setState({ pop: 'view' }),
+      quickExport: () => this.setState({ pop: 'share' }),
+      shareOpen: st.pop === 'share',
+      firstPagePaths: openNote ? this.pathsFor(openNote.pages[0]) : [],
+      shareMeta: openNote ? ('PDF document · ' + openNote.pages.length + (openNote.pages.length === 1 ? ' page' : ' pages') + ' · ' + Math.max(1, Math.round(openNote.pages.reduce((a, p) => a + p.length, 0) * 1.4 + openNote.pages.length * 12)) + ' KB') : '',
+      shareTargets: [
+        { id: 'notes', label: 'Notes', mark: 'N', bg: '#fff3e4', fg: 'var(--color-accent-700)' },
+        { id: 'mail', label: 'Mail', mark: '✉', bg: '#eef3fa', fg: '#2f5ea8' },
+        { id: 'messages', label: 'Messages', mark: '◗', bg: '#eef6f0', fg: '#3f7d55' },
+        { id: 'airdrop', label: 'AirDrop', mark: '◎', bg: '#f3f0f7', fg: '#7a4fa3' },
+        { id: 'files', label: 'Files', mark: '▤', bg: 'var(--color-neutral-200)', fg: 'var(--color-neutral-800)' }
+      ].map(t => ({ ...t, act: () => this.setState({ pop: null }) })),
+      shareActions: [
+        { label: 'Copy', icon: 'M9 9h10.5v10.5H9zM15 5.5H4.5V16', act: () => { this.setState({ pop: null }); try { navigator.clipboard.writeText(openNote ? openNote.title : ''); } catch (e) {} } },
+        { label: 'Markup', icon: 'M12 20.5a8.5 8.5 0 1 0 0-17 8.5 8.5 0 0 0 0 17M8.5 15.5l7-7M15.5 8.5l.6 2.4-2.4-.6', act: () => this.setState({ pop: null, tool: 'pen' }) },
+        { label: 'Print', icon: 'M7 8.5V4.5h10v4M7 17.5H5.2A1.2 1.2 0 0 1 4 16.3v-5.6A1.2 1.2 0 0 1 5.2 9.5h13.6A1.2 1.2 0 0 1 20 10.7v5.6a1.2 1.2 0 0 1-1.2 1.2H17M7 14h10v5.5H7z', act: () => { this.setState({ pop: null }); setTimeout(() => window.print(), 80); } },
+        { label: 'Save to Files', icon: 'M4 7.5A1.5 1.5 0 0 1 5.5 6h3.7l1.6 2H18.5A1.5 1.5 0 0 1 20 9.5v8A1.5 1.5 0 0 1 18.5 19h-13A1.5 1.5 0 0 1 4 17.5z', act: () => { this.setState({ pop: null }); setTimeout(() => window.print(), 80); } },
+        { label: 'Share as link', icon: 'M10 13.8a4 4 0 0 0 5.7 0l2.6-2.6a4 4 0 0 0-5.7-5.7l-1.3 1.3M14 10.2a4 4 0 0 0-5.7 0l-2.6 2.6a4 4 0 1 0 5.7 5.7l1.3-1.3', act: () => { this.setState({ pop: null }); try { navigator.clipboard.writeText('https://inkwell.app/n/' + (openNote ? openNote.id : '')); } catch (e) {} } }
+      ].map((a, i, arr) => ({ ...a, rule: i === arr.length - 1 ? 'transparent' : 'var(--color-divider)' })),
+      exportAs: () => { this.setState({ pop: null }); setTimeout(() => window.print(), 60); },
+      publishGallery: () => this.setState({ pop: null }),
+      createLink: () => {
+        this.setState({ pop: null });
+        try { navigator.clipboard.writeText('https://inkwell.app/n/' + (openNote ? openNote.id : '')); } catch (e) {}
+      },
+      studySession: () => this.setState({ pop: null, studying: !st.studying }),
+      studyLabel: st.studying ? 'End study session' : 'Start study session',
+      studyBg: st.studying ? 'var(--color-accent-100)' : 'transparent',
+      noteCreated: openNote ? ('Created: ' + openNote.date) : '',
+      viewOptions: [
+        { label: 'Scrolling', value: 'Vertical', act: () => this.setState({ pop: null }) },
+        { label: 'Page numbers', value: st.hideNums ? 'Hidden' : 'Shown', act: () => this.setState({ hideNums: !st.hideNums }) },
+        { label: 'Back to editor', value: '', act: () => this.setState({ pop: null }) }
+      ],
+      moreBg: st.pop === 'more' ? 'var(--color-accent-100)' : 'transparent',
+      openPalette: () => this.setState({ pop: st.pop === 'palette' ? null : 'palette' }),
+      toggleMore: () => this.setState({ pop: st.pop === 'more' ? null : 'more' }),
+      closePops: () => this.setState({ pop: null }),
+      redoColor: this.undone.length ? 'var(--color-text)' : 'var(--color-neutral-400)',
+      redo: () => {
+        const item = this.undone.pop(); if (!item || !openNote) return;
+        this.mutateNote(n => ({ ...n, pages: n.pages.map((pg, i) => i === Math.min(item.page, n.pages.length - 1) ? [...pg, item.stroke] : pg) }));
+      },
+      moreActions: [
+        { label: 'Insert', glyph: '+', color: 'var(--color-text)', act: () => { this.setState({ pop: null }); this.mutateNote(n => ({ ...n, pages: [...n.pages, []] })); } },
+        { label: 'Clear current page', glyph: '○', color: 'var(--color-text)', act: () => { this.setState({ pop: null }); this.mutateNote(n => ({ ...n, pages: n.pages.map((pg, i) => i === Math.min(this.lastPage, n.pages.length - 1) ? [] : pg) })); } },
+        { label: 'Delete current page', glyph: '🗑', color: '#b4322a', act: () => {
+            this.setState({ pop: null });
+            this.mutateNote(n => n.pages.length < 2 ? { ...n, pages: [[]] } : { ...n, pages: n.pages.filter((pg, i) => i !== Math.min(this.lastPage, n.pages.length - 1)) });
+          } }
+      ],
+      paperName: paper.label,
+      papers: this.papers.map(p => {
+        const on = !!openNote && openNote.paper === p.id;
+        return {
+          label: p.label, paperBg: p.bg, swatchImage: p.image, swatchSize: p.size, active: on,
+          shadow: on
+            ? '0 0 0 1px var(--color-accent), 0 0 0 3px color-mix(in srgb, var(--color-accent) 22%, transparent), 0 2px 6px color-mix(in srgb, #2d2b2b 12%, transparent)'
+            : '0 0 0 1px var(--color-divider), 0 1px 3px color-mix(in srgb, #2d2b2b 9%, transparent)',
+          sheen: 'linear-gradient(150deg, color-mix(in srgb, #f8f4f4 26%, transparent), transparent 46%)',
+          labelColor: on ? 'var(--color-accent-700)' : 'var(--color-text)',
+          bg: on ? 'var(--color-accent-100)' : 'transparent',
+          border: on ? 'var(--color-accent)' : 'var(--color-divider)',
+          pick: () => this.mutateNote(n => ({ ...n, paper: p.id }))
+        };
+      })
+    };
+  }
+}
+</script>
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js').catch(() => {});
+    });
+  }
+</script>
+</body>
+</html>
