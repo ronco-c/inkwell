@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Inkwell</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#f3f2f2">
@@ -381,7 +381,7 @@
       <div ref="{{ scrollRef }}" style="flex:1;overflow:auto;display:flex;flex-direction:column;align-items:center;gap:22px;padding:104px 20px 70px;background:var(--color-neutral-200)">
         <sc-for list="{{ pages }}" as="pg" hint-placeholder-count="1">
           <div style="position:relative;flex:none;width:820px;height:1100px;background-color:{{ paperBg }};background-image:{{ paperImage }};background-size:{{ paperSize }};border:1px solid var(--color-divider);box-shadow:var(--shadow-md)">
-            <canvas ref="{{ pg.ref }}" width="1640" height="2200" onPointerDown="{{ pg.down }}" onPointerMove="{{ pg.move }}" onPointerUp="{{ pg.up }}" onPointerLeave="{{ pg.up }}" style="position:absolute;inset:0;width:820px;height:1100px;touch-action:none;cursor:crosshair"></canvas>
+            <canvas ref="{{ pg.ref }}" width="1640" height="2200" onPointerDown="{{ pg.down }}" onPointerMove="{{ pg.move }}" onPointerUp="{{ pg.up }}" onPointerLeave="{{ pg.up }}" style="position:absolute;inset:0;width:820px;height:1100px;touch-action:manipulation;cursor:crosshair"</canvas>
             <span style="position:absolute;bottom:10px;inset-inline-start:14px;font-size:11px;font-variant-numeric:tabular-nums;color:{{ pg.numColor }}">{{ pg.num }}</span>
             <sc-if value="{{ pg.editingText }}" hint-placeholder-val="{{ false }}">
               <input value="{{ textDraft }}" onChange="{{ onTextDraft }}" onKeyDown="{{ onTextKey }}" onBlur="{{ commitText }}" autoFocus="{{ true }}" placeholder="Type here…" style="position:absolute;top:{{ pg.textTop }};left:{{ pg.textLeft }};width:320px;padding:5px 8px;border:1px solid var(--color-accent);border-radius:var(--radius-sm);background:color-mix(in srgb, #fbfaf8 92%, transparent);font-family:var(--font-body);font-size:20px;color:var(--color-text);z-index:6">
@@ -884,11 +884,32 @@ class Component extends DCLogic {
       return;
     }
     if (tool === 'eraser') { this.erasing = true; this.erase(i, this.pos(e)); return; }
+    // Hold the Pencil still on the page for a beat and it becomes a temporary eraser —
+    // the closest thing a website can do to a Pencil Pro squeeze. Safari doesn't expose the
+    // squeeze gesture itself to web pages at all (it's PencilKit-only), so this is a substitute:
+    // hold-still-to-erase, release to go back to whatever tool you were using.
+    if (e.pointerType === 'pen' && (tool === 'pen' || tool === 'pencil' || tool === 'marker')) {
+      clearTimeout(this.holdTimer);
+      const p0 = this.pos(e);
+      this.holdOrigin = p0; this.holdPrevTool = tool; this.holdPageIdx = i; this.holdActive = false;
+      this.holdTimer = setTimeout(() => {
+        if (!this.cur) return;
+        this.holdActive = true;
+        this.cur = null;
+        this.erasing = true;
+        this.setState({ tool: 'eraser' });
+        this.erase(this.holdPageIdx, this.holdOrigin);
+      }, 420);
+    }
     this.cur = { color: this.state.ink, w: this.strokeWidth(), marker: this.state.tool === 'marker', pts: [this.pos(e)] };
     this.redrawAll();
   }
   move(i, e) {
     if (e.pointerType === 'touch') return;
+    if (this.holdTimer && !this.holdActive && this.holdOrigin) {
+      const p = this.pos(e);
+      if (Math.hypot(p[0] - this.holdOrigin[0], p[1] - this.holdOrigin[1]) > 8) { clearTimeout(this.holdTimer); this.holdTimer = null; }
+    }
     if (this.lassoing && this.selRect && this.selRect.page === i) {
       const p = this.pos(e); this.selRect.x1 = p[0]; this.selRect.y1 = p[1]; this.redrawAll(); return;
     }
@@ -903,6 +924,14 @@ class Component extends DCLogic {
   }
   up(e) {
     if (e && e.pointerType === 'touch') return;
+    clearTimeout(this.holdTimer); this.holdTimer = null;
+    if (this.holdActive) {
+      this.holdActive = false;
+      this.erasing = false;
+      const prev = this.holdPrevTool; this.holdPrevTool = null;
+      if (prev) this.setState({ tool: prev });
+      return;
+    }
     this.erasing = false;
     if (this.lassoing) {
       this.lassoing = false;
@@ -927,22 +956,63 @@ class Component extends DCLogic {
       const pages = n.pages.map((pg, k) => k === i ? [...pg, s] : pg);
       return { ...n, pages: grow ? [...pages, []] : pages };
     });
-    if (this.looksLikeStraightLine(s.pts)) this.scheduleStraighten(note.id, i, s);
+    this.scheduleShapeAssist(note.id, i, s);
   }
-  // A stroke "looks like" an intended straight line when it's reasonably long and its drawn
-  // path barely wanders from the direct start-to-end distance (a steady, deliberate drag).
-  looksLikeStraightLine(pts) {
-    if (!pts || pts.length < 3) return false;
+  // Shape assist: looks at a just-finished stroke and decides whether it was clearly *trying*
+  // to be a line, a rectangle, or a circle/ellipse — the same kind of "clean it up for me"
+  // help most drawing apps offer. Returns { pts } to swap in, or null to leave it as handwriting.
+  recognizeShape(pts) {
+    if (!pts || pts.length < 4) return null;
     const a = pts[0], b = pts[pts.length - 1];
-    const straightDist = Math.hypot(b[0] - a[0], b[1] - a[1]);
-    if (straightDist < 90) return false;
-    let pathLen = 0;
-    for (let k = 1; k < pts.length; k++) pathLen += Math.hypot(pts[k][0] - pts[k - 1][0], pts[k][1] - pts[k - 1][1]);
-    return pathLen / straightDist < 1.06;
+    const xs = pts.map(p => p[0]), ys = pts.map(p => p[1]);
+    const minX = Math.min.apply(null, xs), maxX = Math.max.apply(null, xs);
+    const minY = Math.min.apply(null, ys), maxY = Math.max.apply(null, ys);
+    const w = maxX - minX, h = maxY - minY, diag = Math.hypot(w, h);
+    const gap = Math.hypot(b[0] - a[0], b[1] - a[1]);
+    const closed = gap < Math.max(24, diag * 0.18);
+
+    if (!closed) {
+      // open path: does it read as a deliberate straight drag?
+      if (gap < 90) return null;
+      let pathLen = 0;
+      for (let k = 1; k < pts.length; k++) pathLen += Math.hypot(pts[k][0] - pts[k - 1][0], pts[k][1] - pts[k - 1][1]);
+      if (pathLen / gap < 1.12) return { pts: [a, b] };
+      return null;
+    }
+
+    // closed loop: too small and it's more likely a letter ("o", "e"...) than a shape
+    if (diag < 60) return null;
+
+    // circle/ellipse test: distance from the bbox-centered ellipse should barely vary
+    const cx = (minX + maxX) / 2, cy = (minY + maxY) / 2, rx = w / 2, ry = h / 2;
+    if (rx > 4 && ry > 4) {
+      let err = 0;
+      for (const p of pts) err += Math.abs(Math.hypot((p[0] - cx) / rx, (p[1] - cy) / ry) - 1);
+      err /= pts.length;
+      if (err < 0.14) {
+        const steps = 72, out = [];
+        for (let k = 0; k <= steps; k++) {
+          const t = (k / steps) * Math.PI * 2;
+          out.push([cx + Math.cos(t) * rx, cy + Math.sin(t) * ry]);
+        }
+        return { pts: out };
+      }
+    }
+
+    // rectangle test: how closely the path hugs the bounding box's four edges
+    let rectErr = 0;
+    for (const p of pts) rectErr += Math.min(Math.abs(p[0] - minX), Math.abs(p[0] - maxX), Math.abs(p[1] - minY), Math.abs(p[1] - maxY));
+    rectErr /= pts.length;
+    if (rectErr < Math.max(10, diag * 0.06)) {
+      return { pts: [[minX, minY], [maxX, minY], [maxX, maxY], [minX, maxY], [minX, minY]] };
+    }
+    return null;
   }
-  // Waits a beat, then — if that exact stroke is still there, untouched — replaces it with a
-  // perfectly straight segment between its original start and end points.
-  scheduleStraighten(noteId, pageIdx, strokeRef) {
+  // Waits a beat, then — if that exact stroke is still there, untouched — swaps it for the
+  // clean shape recognizeShape() found, if any.
+  scheduleShapeAssist(noteId, pageIdx, strokeRef) {
+    const shape = this.recognizeShape(strokeRef.pts);
+    if (!shape) return;
     setTimeout(() => {
       let changed = false;
       const subjects = this.state.subjects.map(sub => ({
@@ -952,9 +1022,8 @@ class Component extends DCLogic {
           const pg = n.pages[pageIdx];
           const idx = pg.indexOf(strokeRef);
           if (idx === -1) return n;
-          const a = strokeRef.pts[0], b = strokeRef.pts[strokeRef.pts.length - 1];
           const nextPage = pg.slice();
-          nextPage[idx] = { ...strokeRef, pts: [a, b] };
+          nextPage[idx] = { ...strokeRef, pts: shape.pts };
           changed = true;
           return { ...n, pages: n.pages.map((p, k) => k === pageIdx ? nextPage : p) };
         })
