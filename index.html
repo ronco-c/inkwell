@@ -23,7 +23,7 @@
 
 <style>
   body{margin:0;background:var(--color-bg)}
-  .nb{font-family:var(--font-body);-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;-webkit-user-drag:none}
+  .nb{font-family:var(--font-body);-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;-webkit-user-drag:none;zoom:1.08}
   .nb input{font-family:var(--font-body)}
   .nb input,.nb textarea{-webkit-user-select:text;user-select:text}
   .nb canvas{-webkit-user-drag:none;-webkit-touch-callout:none}
@@ -31,7 +31,7 @@
   a:hover{color:var(--color-accent)}
 </style>
 </helmet>
-<div class="nb" dir="ltr" style="display:flex;height:100vh;overflow:hidden;background:var(--color-bg);color:var(--color-text)">
+<div class="nb" dir="ltr" style="display:flex;height:calc(100vh / 1.08);overflow:hidden;background:var(--color-bg);color:var(--color-text)">
 
   <sc-if value="{{ inLibrary }}" hint-placeholder-val="{{ true }}">
     <div style="display:flex;width:100%;height:100%">
@@ -865,7 +865,11 @@ class Component extends DCLogic {
     const tool = this.state.tool;
     if (tool === 'hand') return;
     if (e.pointerType === 'touch') return;
-    e.currentTarget.setPointerCapture && e.currentTarget.setPointerCapture(e.pointerId);
+    // Lock out touch-driven panning for the duration of this stroke — otherwise a hand resting
+    // on the glass while you write with the Pencil reads as a finger-scroll and drags the page.
+    const canvasEl = e.currentTarget;
+    canvasEl.style.touchAction = 'none';
+    canvasEl.setPointerCapture && canvasEl.setPointerCapture(e.pointerId);
     this.curPage = i; this.lastPage = i;
     if (this.state.pageSel !== i) this.setState({ pageSel: i });
     if (tool === 'text') {
@@ -898,10 +902,12 @@ class Component extends DCLogic {
         this.cur = null;
         this.erasing = true;
         this.setState({ tool: 'eraser' });
+        canvasEl.style.touchAction = 'none'; // the setState above re-renders the canvas; reassert the lock
         this.erase(this.holdPageIdx, this.holdOrigin);
       }, 420);
     }
     this.cur = { color: this.state.ink, w: this.strokeWidth(), marker: this.state.tool === 'marker', pts: [this.pos(e)] };
+    canvasEl.style.touchAction = 'none'; // reassert once more in case the pageSel setState above re-rendered
     this.redrawAll();
   }
   move(i, e) {
@@ -924,6 +930,7 @@ class Component extends DCLogic {
   }
   up(e) {
     if (e && e.pointerType === 'touch') return;
+    if (e && e.currentTarget) e.currentTarget.style.touchAction = 'manipulation'; // unlock finger-scroll again now that the stroke is done
     clearTimeout(this.holdTimer); this.holdTimer = null;
     if (this.holdActive) {
       this.holdActive = false;
