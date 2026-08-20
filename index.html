@@ -862,6 +862,7 @@ class Component extends DCLogic {
   down(i, e) {
     const tool = this.state.tool;
     if (tool === 'hand') return;
+    if (e.pointerType === 'touch') return;
     e.currentTarget.setPointerCapture && e.currentTarget.setPointerCapture(e.pointerId);
     this.curPage = i; this.lastPage = i;
     if (this.state.pageSel !== i) this.setState({ pageSel: i });
@@ -885,6 +886,7 @@ class Component extends DCLogic {
     this.redrawAll();
   }
   move(i, e) {
+    if (e.pointerType === 'touch') return;
     if (this.lassoing && this.selRect && this.selRect.page === i) {
       const p = this.pos(e); this.selRect.x1 = p[0]; this.selRect.y1 = p[1]; this.redrawAll(); return;
     }
@@ -897,7 +899,8 @@ class Component extends DCLogic {
     this.styleFor(ctx, this.cur);
     ctx.beginPath(); ctx.moveTo(p[n - 2][0], p[n - 2][1]); ctx.lineTo(p[n - 1][0], p[n - 1][1]); ctx.stroke(); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
   }
-  up() {
+  up(e) {
+    if (e && e.pointerType === 'touch') return;
     this.erasing = false;
     if (this.lassoing) {
       this.lassoing = false;
@@ -1198,7 +1201,7 @@ class Component extends DCLogic {
         selCount: st.sel ? st.sel.idxs.length : 0,
         numColor: paper.dark ? 'var(--color-neutral-400)' : 'var(--color-neutral-600)',
         ref: (el) => { if (el) { this.els[i] = el; this.redrawAll(); } else { delete this.els[i]; } },
-        down: (e) => this.down(i, e), move: (e) => this.move(i, e), up: () => this.up()
+        down: (e) => this.down(i, e), move: (e) => this.move(i, e), up: (e) => this.up(e)
       })) : [],
       addPage: () => this.mutateNote(n => ({ ...n, pages: [...n.pages, this.template ? this.template.slice() : []] })),
       scrollRef: this.scrollRef,
