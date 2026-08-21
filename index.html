@@ -394,26 +394,27 @@
         </div>
       </sc-if>
 
-      <div ref="{{ scrollRef }}" style="flex:1;overflow:auto;display:flex;flex-direction:column;align-items:center;gap:22px;padding:104px 20px 70px;background:var(--color-neutral-200)">
-        <sc-for list="{{ pages }}" as="pg" hint-placeholder-count="1">
-          <div style="position:relative;flex:none;width:820px;height:1100px;background-color:{{ paperBg }};background-image:{{ paperImage }};background-size:{{ paperSize }};border:1px solid var(--color-divider);box-shadow:var(--shadow-md)">
-            <canvas ref="{{ pg.ref }}" width="1640" height="2200" onPointerDown="{{ pg.down }}" onPointerMove="{{ pg.move }}" onPointerUp="{{ pg.up }}" onPointerLeave="{{ pg.up }}" style="position:absolute;inset:0;width:820px;height:1100px;touch-action:manipulation;cursor:crosshair"></canvas>
-            <span style="position:absolute;bottom:10px;inset-inline-start:14px;font-size:11px;font-variant-numeric:tabular-nums;color:{{ pg.numColor }}">{{ pg.num }}</span>
-            <sc-if value="{{ pg.editingText }}" hint-placeholder-val="{{ false }}">
-              <input value="{{ textDraft }}" onChange="{{ onTextDraft }}" onKeyDown="{{ onTextKey }}" onBlur="{{ commitText }}" autoFocus="{{ true }}" placeholder="Type here…" style="position:absolute;top:{{ pg.textTop }};left:{{ pg.textLeft }};width:320px;padding:5px 8px;border:1px solid var(--color-accent);border-radius:var(--radius-sm);background:color-mix(in srgb, #fbfaf8 92%, transparent);font-family:var(--font-body);font-size:20px;color:var(--color-text);z-index:6">
-            </sc-if>
-            <sc-if value="{{ pg.hasSel }}" hint-placeholder-val="{{ false }}">
-              <div style="position:absolute;top:{{ pg.selTop }};left:{{ pg.selLeft }};z-index:6;display:flex;align-items:center;padding:4px;border:1px solid var(--color-divider);border-radius:14px;background:#fbfaf8;box-shadow:var(--shadow-md)">
-                <span style="padding:0 8px;font-size:11px;font-variant-numeric:tabular-nums;color:var(--color-neutral-600)">{{ pg.selCount }}</span>
-                <sc-for list="{{ selActions }}" as="a" hint-placeholder-count="4">
-                  <span style="width:1px;height:18px;background:{{ a.rule }}"></span>
-                  <button onClick="{{ a.act }}" style="padding:6px 12px;border:0;border-radius:10px;background:transparent;cursor:pointer;font-family:var(--font-body);font-size:13.5px;color:{{ a.color }}" style-hover="background:var(--color-neutral-200)">{{ a.label }}</button>
-                </sc-for>
-              </div>
-            </sc-if>
-          </div>
-        </sc-for>
-
+      <div ref="{{ scrollRef }}" style="flex:1;overflow:auto;padding:104px 20px 70px;background:var(--color-neutral-200);touch-action:pan-x pan-y">
+        <div ref="{{ zoomRef }}" style="display:flex;flex-direction:column;align-items:center;gap:22px;transform-origin:0 0">
+          <sc-for list="{{ pages }}" as="pg" hint-placeholder-count="1">
+            <div style="position:relative;flex:none;width:820px;height:1100px;background-color:{{ paperBg }};background-image:{{ paperImage }};background-size:{{ paperSize }};border:1px solid var(--color-divider);box-shadow:var(--shadow-md)">
+              <canvas ref="{{ pg.ref }}" width="1640" height="2200" onPointerDown="{{ pg.down }}" onPointerMove="{{ pg.move }}" onPointerUp="{{ pg.up }}" onPointerLeave="{{ pg.up }}" style="position:absolute;inset:0;width:820px;height:1100px;touch-action:manipulation;cursor:crosshair"></canvas>
+              <span style="position:absolute;bottom:10px;inset-inline-start:14px;font-size:11px;font-variant-numeric:tabular-nums;color:{{ pg.numColor }}">{{ pg.num }}</span>
+              <sc-if value="{{ pg.editingText }}" hint-placeholder-val="{{ false }}">
+                <input value="{{ textDraft }}" onChange="{{ onTextDraft }}" onKeyDown="{{ onTextKey }}" onBlur="{{ commitText }}" autoFocus="{{ true }}" placeholder="Type here…" style="position:absolute;top:{{ pg.textTop }};left:{{ pg.textLeft }};width:320px;padding:5px 8px;border:1px solid var(--color-accent);border-radius:var(--radius-sm);background:color-mix(in srgb, #fbfaf8 92%, transparent);font-family:var(--font-body);font-size:20px;color:var(--color-text);z-index:6">
+              </sc-if>
+              <sc-if value="{{ pg.hasSel }}" hint-placeholder-val="{{ false }}">
+                <div style="position:absolute;top:{{ pg.selTop }};left:{{ pg.selLeft }};z-index:6;display:flex;align-items:center;padding:4px;border:1px solid var(--color-divider);border-radius:14px;background:#fbfaf8;box-shadow:var(--shadow-md)">
+                  <span style="padding:0 8px;font-size:11px;font-variant-numeric:tabular-nums;color:var(--color-neutral-600)">{{ pg.selCount }}</span>
+                  <sc-for list="{{ selActions }}" as="a" hint-placeholder-count="4">
+                    <span style="width:1px;height:18px;background:{{ a.rule }}"></span>
+                    <button onClick="{{ a.act }}" style="padding:6px 12px;border:0;border-radius:10px;background:transparent;cursor:pointer;font-family:var(--font-body);font-size:13.5px;color:{{ a.color }}" style-hover="background:var(--color-neutral-200)">{{ a.label }}</button>
+                  </sc-for>
+                </div>
+              </sc-if>
+            </div>
+          </sc-for>
+        </div>
       </div>
       <input type="file" accept="image/*" ref="{{ fileRef }}" onChange="{{ onFile }}" style="display:none">
     </div>
@@ -600,12 +601,64 @@ class Component extends DCLogic {
     reader.readAsDataURL(file);
   }
   scrollRef = React.createRef();
+  zoomRef = React.createRef();
   goToPage(i) {
     const el = this.scrollRef.current;
     if (el) el.scrollTop = Math.max(0, i * (this.PH + 22) + 104 - 104);
     this.lastPage = i;
     this.setState({ pageSel: i });
   }
+
+  // ---------- pinch-to-zoom the note only, never the surrounding chrome ----------
+  // Native two-finger pinch-zoom scales the *entire* page — including the fixed toolbar —
+  // since it's a browser/compositor-level transform, not something CSS can exempt an element
+  // from. To keep the toolbar genuinely locked at a constant size, pinch-zoom is instead
+  // implemented by hand, scoped to just the notebook pages (`transform: scale()` on `zoomRef`,
+  // never on anything outside `scrollRef`). CSS `transform` — unlike the old `zoom` property
+  // that broke pen accuracy before (see project notes) — is properly accounted for by
+  // `getBoundingClientRect()`, so `pos()` below just divides by the live scale to stay correct.
+  zoomScale = 1;
+  ZOOM_MIN = 1; ZOOM_MAX = 3;
+  pinch = null;
+  touchDist(a, b) { return Math.hypot(b.clientX - a.clientX, b.clientY - a.clientY); }
+  onPinchStart = (e) => {
+    if (e.touches.length !== 2) { this.pinch = null; return; }
+    this.pinch = { startDist: this.touchDist(e.touches[0], e.touches[1]), startScale: this.zoomScale };
+    e.preventDefault();
+  };
+  onPinchMove = (e) => {
+    if (e.touches.length !== 2 || !this.pinch) return;
+    e.preventDefault();
+    const [t1, t2] = e.touches;
+    const ratio = this.touchDist(t1, t2) / this.pinch.startDist;
+    const next = Math.max(this.ZOOM_MIN, Math.min(this.ZOOM_MAX, this.pinch.startScale * ratio));
+    this.applyZoom(next, (t1.clientX + t2.clientX) / 2, (t1.clientY + t2.clientY) / 2);
+  };
+  onPinchEnd = (e) => { if (e.touches.length < 2) this.pinch = null; };
+  applyZoom(next, midX, midY) {
+    const scroller = this.scrollRef.current, wrapper = this.zoomRef.current;
+    if (!scroller || !wrapper || next === this.zoomScale) return;
+    const rect = scroller.getBoundingClientRect();
+    // The content point currently under the fingers, in *unscaled* wrapper coordinates —
+    // computed with the outgoing scale, then used to re-anchor scroll after the new scale
+    // is applied, so that same point stays under the fingers (the standard "zoom to point").
+    const prev = this.zoomScale;
+    const localX = (midX - rect.left + scroller.scrollLeft) / prev;
+    const localY = (midY - rect.top + scroller.scrollTop) / prev;
+    this.zoomScale = next;
+    wrapper.style.transform = 'scale(' + next + ')';
+    scroller.scrollLeft = localX * next - (midX - rect.left);
+    scroller.scrollTop = localY * next - (midY - rect.top);
+  }
+  attachScrollEl = (el) => {
+    this.scrollRef.current = el;
+    if (!el || el.__inkwellPinchGuard) return;
+    el.__inkwellPinchGuard = true;
+    el.addEventListener('touchstart', this.onPinchStart, { passive: false });
+    el.addEventListener('touchmove', this.onPinchMove, { passive: false });
+    el.addEventListener('touchend', this.onPinchEnd, { passive: false });
+    el.addEventListener('touchcancel', this.onPinchEnd, { passive: false });
+  };
   pressColor(value, e) {
     if (e.button === 2) return;
     this.setState({ pressing: 'ink:' + value });
@@ -906,7 +959,10 @@ class Component extends DCLogic {
       }
     });
   }
-  pos(e) { const r = e.currentTarget.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; }
+  // getBoundingClientRect() reflects the live pinch-zoom transform (unlike the old CSS `zoom`
+  // property), so dividing by the current scale maps back to the canvas's own unscaled 820x1100
+  // coordinate space — a no-op at the default scale of 1.
+  pos(e) { const r = e.currentTarget.getBoundingClientRect(); const s = this.zoomScale || 1; return [(e.clientX - r.left) / s, (e.clientY - r.top) / s]; }
   strokeWidth() {
     const base = this.sizes[this.state.size].w;
     if (this.state.tool === 'marker') return base * 8;
@@ -1411,7 +1467,8 @@ class Component extends DCLogic {
         down: (e) => this.down(i, e), move: (e) => this.move(i, e), up: (e) => this.up(e)
       })) : [],
       addPage: () => this.mutateNote(n => ({ ...n, pages: [...n.pages, this.template ? this.template.slice() : []] })),
-      scrollRef: this.scrollRef,
+      scrollRef: this.attachScrollEl,
+      zoomRef: this.zoomRef,
       pagesOpen: st.pagesOpen,
       // Top-right popovers are position:fixed (so they stay put while the note scrolls), which
       // means their inset-inline-end is measured from the viewport edge, not the editor column's
