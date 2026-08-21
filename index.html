@@ -137,18 +137,21 @@
         </div>
 
         <div style="display:flex;flex-direction:column;border:1px solid var(--color-divider);border-radius:20px;background:#fbfaf8;box-shadow:var(--shadow-md);overflow:hidden;pointer-events:auto">
-          <div style="display:flex;align-items:stretch;padding:6px 10px 0">
+          <div style="display:flex;align-items:center;padding:7px 6px 8px">
             <sc-for list="{{ tools }}" as="t" hint-placeholder-count="9">
               <sc-if value="{{ t.isDivider }}" hint-placeholder-val="{{ false }}">
-                <span style="width:1px;margin:8px 8px 10px;background:var(--color-divider)"></span>
+                <span style="width:1px;height:24px;margin:0 6px;background:var(--color-divider)"></span>
               </sc-if>
               <sc-if value="{{ t.isTool }}" hint-placeholder-val="{{ true }}">
-                <button onClick="{{ t.pick }}" onPointerDown="{{ t.press }}" onPointerUp="{{ t.release }}" onPointerLeave="{{ t.release }}" title="{{ t.label }}" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;width:56px;height:52px;padding:0;border:0;border-bottom:2.5px solid {{ t.line }};background:transparent;cursor:pointer;color:{{ t.color }};transform:{{ t.lift }};transition:transform .16s ease" style-hover="color:var(--color-accent-700)">
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="{{ t.icon }}"></path></svg>
-                  <span style="font-family:var(--font-body);font-size:9px;letter-spacing:.02em;line-height:1">{{ t.label }}</span>
+                <button onClick="{{ t.pick }}" onPointerDown="{{ t.press }}" onPointerUp="{{ t.release }}" onPointerLeave="{{ t.release }}" title="{{ t.label }}" style="display:flex;align-items:center;justify-content:center;width:41px;height:38px;padding:0;border:0;border-bottom:2.5px solid {{ t.line }};background:transparent;cursor:pointer;color:{{ t.color }};transform:{{ t.lift }};transition:transform .16s ease" style-hover="color:var(--color-accent-700)">
+                  <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="{{ t.icon }}"></path></svg>
                 </button>
               </sc-if>
             </sc-for>
+            <span style="width:1px;height:24px;margin:0 6px;background:var(--color-divider)"></span>
+            <button onClick="{{ toggleTray }}" title="More tools" style="display:flex;align-items:center;justify-content:center;width:24px;height:38px;padding:0;border:0;background:transparent;cursor:pointer;color:var(--color-neutral-600)" style-hover="color:var(--color-accent-700)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"></path></svg>
+            </button>
           </div>
           <div style="height:1px;background:var(--color-divider)"></div>
           <div style="display:flex;align-items:center;padding:9px 10px">
@@ -203,6 +206,19 @@
                 <span>{{ z.label }}</span>
               </button>
             </sc-for>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ selModeOpen }}" hint-placeholder-val="{{ false }}">
+          <div style="position:absolute;top:104px;left:50%;transform:translateX(-50%);z-index:36;display:flex;align-items:center;gap:5px;padding:5px;border:1px solid var(--color-divider);border-radius:16px;background:#fbfaf8;box-shadow:var(--shadow-lg);pointer-events:auto">
+            <button onClick="{{ pickFreeform }}" style="display:flex;align-items:center;gap:7px;padding:8px 15px;border:1px solid {{ freeformBorder }};border-radius:11px;background:{{ freeformBg }};cursor:pointer;font-family:var(--font-body);font-size:13.5px;color:var(--color-text)" style-hover="border-color:var(--color-accent-400)">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="2.4 2.6"><path d="M4.5 12.2c-.3-3.7 2.6-6.9 6.4-7.1 3.9-.2 5.9 2 7.8 4 1.9 2 2.9 4.6.9 6.5-2 1.9-4.7.6-6.3-.3-1.6-.9-2.6.4-2.1 2 .5 1.6 2.6 2.6 5 2 2.4-.6 3.7-2.1 3.7-2.1"></path></svg>
+              <span>Freeform</span>
+            </button>
+            <button onClick="{{ pickBoxed }}" style="display:flex;align-items:center;gap:7px;padding:8px 15px;border:1px solid {{ boxedBorder }};border-radius:11px;background:{{ boxedBg }};cursor:pointer;font-family:var(--font-body);font-size:13.5px;color:var(--color-text)" style-hover="border-color:var(--color-accent-400)">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="2.4 2.6"><rect x="4.8" y="4.8" width="14.4" height="14.4" rx="2"></rect></svg>
+              <span>Boxed</span>
+            </button>
           </div>
         </sc-if>
 
@@ -381,16 +397,17 @@
       <div ref="{{ scrollRef }}" style="flex:1;overflow:auto;display:flex;flex-direction:column;align-items:center;gap:22px;padding:104px 20px 70px;background:var(--color-neutral-200)">
         <sc-for list="{{ pages }}" as="pg" hint-placeholder-count="1">
           <div style="position:relative;flex:none;width:820px;height:1100px;background-color:{{ paperBg }};background-image:{{ paperImage }};background-size:{{ paperSize }};border:1px solid var(--color-divider);box-shadow:var(--shadow-md)">
-            <canvas ref="{{ pg.ref }}" width="1640" height="2200" onPointerDown="{{ pg.down }}" onPointerMove="{{ pg.move }}" onPointerUp="{{ pg.up }}" onPointerLeave="{{ pg.up }}" style="position:absolute;inset:0;width:820px;height:1100px;touch-action:manipulation;cursor:crosshair"</canvas>
+            <canvas ref="{{ pg.ref }}" width="1640" height="2200" onPointerDown="{{ pg.down }}" onPointerMove="{{ pg.move }}" onPointerUp="{{ pg.up }}" onPointerLeave="{{ pg.up }}" style="position:absolute;inset:0;width:820px;height:1100px;touch-action:manipulation;cursor:crosshair"></canvas>
             <span style="position:absolute;bottom:10px;inset-inline-start:14px;font-size:11px;font-variant-numeric:tabular-nums;color:{{ pg.numColor }}">{{ pg.num }}</span>
             <sc-if value="{{ pg.editingText }}" hint-placeholder-val="{{ false }}">
               <input value="{{ textDraft }}" onChange="{{ onTextDraft }}" onKeyDown="{{ onTextKey }}" onBlur="{{ commitText }}" autoFocus="{{ true }}" placeholder="Type here…" style="position:absolute;top:{{ pg.textTop }};left:{{ pg.textLeft }};width:320px;padding:5px 8px;border:1px solid var(--color-accent);border-radius:var(--radius-sm);background:color-mix(in srgb, #fbfaf8 92%, transparent);font-family:var(--font-body);font-size:20px;color:var(--color-text);z-index:6">
             </sc-if>
             <sc-if value="{{ pg.hasSel }}" hint-placeholder-val="{{ false }}">
-              <div style="position:absolute;top:{{ pg.selTop }};left:{{ pg.selLeft }};z-index:6;display:flex;align-items:center;gap:3px;padding:5px 7px;border:1px solid var(--color-divider);border-radius:var(--radius-md);background:#fbfaf8;box-shadow:var(--shadow-md)">
-                <span style="padding:0 5px;font-size:11px;font-variant-numeric:tabular-nums;color:var(--color-neutral-600)">{{ pg.selCount }}</span>
+              <div style="position:absolute;top:{{ pg.selTop }};left:{{ pg.selLeft }};z-index:6;display:flex;align-items:center;padding:4px;border:1px solid var(--color-divider);border-radius:14px;background:#fbfaf8;box-shadow:var(--shadow-md)">
+                <span style="padding:0 8px;font-size:11px;font-variant-numeric:tabular-nums;color:var(--color-neutral-600)">{{ pg.selCount }}</span>
                 <sc-for list="{{ selActions }}" as="a" hint-placeholder-count="4">
-                  <button onClick="{{ a.act }}" style="padding:4px 9px;border:0;border-radius:var(--radius-sm);background:transparent;cursor:pointer;font-family:var(--font-body);font-size:13px;color:{{ a.color }}" style-hover="background:var(--color-neutral-200)">{{ a.label }}</button>
+                  <span style="width:1px;height:18px;background:{{ a.rule }}"></span>
+                  <button onClick="{{ a.act }}" style="padding:6px 12px;border:0;border-radius:10px;background:transparent;cursor:pointer;font-family:var(--font-body);font-size:13.5px;color:{{ a.color }}" style-hover="background:var(--color-neutral-200)">{{ a.label }}</button>
                 </sc-for>
               </div>
             </sc-if>
@@ -557,11 +574,11 @@ class Component extends DCLogic {
             adding: false, newName: '', renameSubj: null, renameNote: null, draft: '',
             editing: false, selected: [], menu: null, pressing: null, pop: null,
             pagesOpen: false, pageQuery: '', pageMenu: null, pageSel: 0,
-            textEdit: null, textDraft: '', sel: null,
+            textEdit: null, textDraft: '', sel: null, selMode: 'boxed',
             quick: ['#201f1d', '#b4322a', '#2f5ea8', '#b68235'] };
 
   undone = [];
-  clip = null; template = null; clipItems = null; selRect = null;
+  clip = null; template = null; clipItems = null; selRect = null; selPath = null;
   fileRef = React.createRef();
   insertImage(file) {
     const reader = new FileReader();
@@ -677,13 +694,23 @@ class Component extends DCLogic {
     const s = this.state.sel;
     if (!s) return;
     const note = this.note();
-    if (kind === 'clear') { this.selRect = null; this.setState({ sel: null }); this.redrawAll(); return; }
+    if (kind === 'clear') { this.selRect = null; this.selPath = null; this.setState({ sel: null }); this.redrawAll(); return; }
     if (kind === 'copy' || kind === 'cut') this.clipItems = s.idxs.map(k => note.pages[s.page][k]);
     if (kind === 'cut' || kind === 'delete') {
       this.mutateNote(n => ({ ...n, pages: n.pages.map((pg, k) => k === s.page ? pg.filter((it, j) => s.idxs.indexOf(j) < 0) : pg) }));
     }
     this.selRect = null;
+    this.selPath = null;
     this.setState({ sel: null });
+  }
+  pasteAt(page) {
+    if (!this.clipItems) return;
+    const note = this.note(); if (!note) return;
+    const i = Math.min(page, note.pages.length - 1);
+    this.mutateNote(n => ({ ...n, pages: n.pages.map((pg, k) => k === i
+      ? [...pg, ...this.clipItems.map(it => it.pts
+        ? { ...it, pts: it.pts.map(p => [p[0] + 24, p[1] + 24]) }
+        : { ...it, x: it.x + 24, y: it.y + 24 })] : pg) }));
   }
   pressSizes(e) {
     if (e.button === 2) return;
@@ -717,11 +744,11 @@ class Component extends DCLogic {
 
   papers = [
     { id: 'squares', label: 'Grid', bg: '#fbfaf8', dark: false, image: 'repeating-linear-gradient(to right, color-mix(in srgb, #2f5ea8 13%, transparent) 0 1px, transparent 1px 26px), repeating-linear-gradient(to bottom, color-mix(in srgb, #2f5ea8 13%, transparent) 0 1px, transparent 1px 26px)', size: '26px 26px' },
-    { id: 'lines', label: 'Ruled', bg: '#fbfaf8', dark: false, image: 'repeating-linear-gradient(to bottom, transparent 0 33px, color-mix(in srgb, #2f5ea8 16%, transparent) 33px 34px)', size: 'auto' },
+    { id: 'lines', label: 'Ruled', bg: '#fbfaf8', dark: false, image: 'url(\'data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%274%27 height=%2734%27%3E%3Crect y=%2733%27 width=%274%27 height=%271%27 fill=%27rgba(47,94,168,0.16)%27/%3E%3C/svg%3E\')', size: '100% 34px' },
     { id: 'dots', label: 'Dotted', bg: '#fbfaf8', dark: false, image: 'radial-gradient(circle at 1px 1px, color-mix(in srgb, #201f1d 26%, transparent) 1.2px, transparent 1.4px)', size: '28px 28px' },
     { id: 'fine', label: 'Fine grid', bg: '#fbfaf8', dark: false, image: 'repeating-linear-gradient(to right, color-mix(in srgb, #3f7d55 14%, transparent) 0 1px, transparent 1px 13px), repeating-linear-gradient(to bottom, color-mix(in srgb, #3f7d55 14%, transparent) 0 1px, transparent 1px 13px)', size: '13px 13px' },
     { id: 'plain', label: 'Blank', bg: '#fbfaf8', dark: false, image: 'none', size: 'auto' },
-    { id: 'sepia', label: 'Antique', bg: '#f1e9d9', dark: false, image: 'repeating-linear-gradient(to bottom, transparent 0 33px, color-mix(in srgb, #7d5411 22%, transparent) 33px 34px)', size: 'auto' },
+    { id: 'sepia', label: 'Antique', bg: '#f1e9d9', dark: false, image: 'url(\'data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%274%27 height=%2734%27%3E%3Crect y=%2733%27 width=%274%27 height=%271%27 fill=%27rgba(125,84,17,0.22)%27/%3E%3C/svg%3E\')', size: '100% 34px' },
     { id: 'music', label: 'Manuscript', bg: '#fbfaf8', dark: false, image: 'repeating-linear-gradient(to bottom, color-mix(in srgb, #201f1d 34%, transparent) 0 1px, transparent 1px 12px)', size: '100% 62px' },
     { id: 'dark', label: 'Blackboard', bg: '#2d2b2b', dark: true, image: 'repeating-linear-gradient(to right, color-mix(in srgb, #f3f2f2 10%, transparent) 0 1px, transparent 1px 26px), repeating-linear-gradient(to bottom, color-mix(in srgb, #f3f2f2 10%, transparent) 0 1px, transparent 1px 26px)', size: '26px 26px' }
   ];
@@ -847,8 +874,34 @@ class Component extends DCLogic {
       if (this.cur && this.curPage === i) this.drawStroke(ctx, this.cur);
       const r = this.selRect;
       if (r && r.page === i) {
-        ctx.save(); ctx.setLineDash([7, 5]); ctx.strokeStyle = '#b68235'; ctx.lineWidth = 1.4;
+        ctx.save(); ctx.setLineDash([6, 4]); ctx.strokeStyle = '#2f8cff'; ctx.lineWidth = 1.4;
         ctx.strokeRect(Math.min(r.x0, r.x1), Math.min(r.y0, r.y1), Math.abs(r.x1 - r.x0), Math.abs(r.y1 - r.y0));
+        ctx.restore();
+      }
+      const fp = this.selPath;
+      if (fp && fp.page === i && fp.pts.length > 1) {
+        ctx.save(); ctx.setLineDash([6, 4]); ctx.strokeStyle = '#2f8cff'; ctx.lineWidth = 1.4;
+        ctx.beginPath(); ctx.moveTo(fp.pts[0][0], fp.pts[0][1]);
+        for (let k = 1; k < fp.pts.length; k++) ctx.lineTo(fp.pts[k][0], fp.pts[k][1]);
+        ctx.stroke(); ctx.restore();
+      }
+      const sel = this.state.sel;
+      if (sel && sel.page === i) {
+        ctx.save(); ctx.setLineDash([6, 4]); ctx.strokeStyle = '#2f8cff'; ctx.lineWidth = 1.4;
+        if (sel.poly && sel.poly.length > 1) {
+          ctx.beginPath(); ctx.moveTo(sel.poly[0][0], sel.poly[0][1]);
+          for (let k = 1; k < sel.poly.length; k++) ctx.lineTo(sel.poly[k][0], sel.poly[k][1]);
+          ctx.closePath(); ctx.stroke();
+        } else {
+          ctx.strokeRect(sel.x0, sel.y0, sel.x1 - sel.x0, sel.y1 - sel.y0);
+        }
+        ctx.restore();
+        ctx.save();
+        [[sel.x0, sel.y0], [sel.x1, sel.y0], [sel.x0, sel.y1], [sel.x1, sel.y1]].forEach(([cx, cy]) => {
+          ctx.beginPath(); ctx.arc(cx, cy, 6, 0, Math.PI * 2);
+          ctx.fillStyle = '#2f8cff'; ctx.fill();
+          ctx.lineWidth = 2; ctx.strokeStyle = '#fbfaf8'; ctx.stroke();
+        });
         ctx.restore();
       }
     });
@@ -865,6 +918,12 @@ class Component extends DCLogic {
     const tool = this.state.tool;
     if (tool === 'hand') return;
     if (e.pointerType === 'touch') return;
+    // The canvas itself isn't a focusable element, so a plain mousedown/pointerdown on it makes
+    // the browser blur whatever currently has focus as part of its own default handling — which,
+    // for the text tool, immediately steals focus back away from the text-edit <input> the instant
+    // after it mounts and autofocuses, silently discarding the just-placed text box. Preventing the
+    // default here (standard practice for canvas editors) stops that.
+    if (e.preventDefault) e.preventDefault();
     // Lock out touch-driven panning for the duration of this stroke — otherwise a hand resting
     // on the glass while you write with the Pencil reads as a finger-scroll and drags the page.
     const canvasEl = e.currentTarget;
@@ -882,7 +941,8 @@ class Component extends DCLogic {
     }
     if (tool === 'lasso') {
       const p = this.pos(e);
-      this.selRect = { page: i, x0: p[0], y0: p[1], x1: p[0], y1: p[1] };
+      if (this.state.selMode === 'freeform') this.selPath = { page: i, pts: [p] };
+      else this.selRect = { page: i, x0: p[0], y0: p[1], x1: p[0], y1: p[1] };
       this.lassoing = true;
       this.setState({ sel: null });
       return;
@@ -907,6 +967,8 @@ class Component extends DCLogic {
       }, 420);
     }
     this.cur = { color: this.state.ink, w: this.strokeWidth(), marker: this.state.tool === 'marker', pts: [this.pos(e)] };
+    this.corrected = false;
+    this.armRestCorrect(i);
     canvasEl.style.touchAction = 'none'; // reassert once more in case the pageSel setState above re-rendered
     this.redrawAll();
   }
@@ -916,22 +978,54 @@ class Component extends DCLogic {
       const p = this.pos(e);
       if (Math.hypot(p[0] - this.holdOrigin[0], p[1] - this.holdOrigin[1]) > 8) { clearTimeout(this.holdTimer); this.holdTimer = null; }
     }
-    if (this.lassoing && this.selRect && this.selRect.page === i) {
-      const p = this.pos(e); this.selRect.x1 = p[0]; this.selRect.y1 = p[1]; this.redrawAll(); return;
+    if (this.lassoing) {
+      if (this.state.selMode === 'freeform') {
+        if (this.selPath && this.selPath.page === i) { this.selPath.pts.push(this.pos(e)); this.redrawAll(); }
+        return;
+      }
+      if (this.selRect && this.selRect.page === i) { const p = this.pos(e); this.selRect.x1 = p[0]; this.selRect.y1 = p[1]; this.redrawAll(); }
+      return;
     }
     if (this.erasing) { if (this.curPage === i) this.erase(i, this.pos(e)); return; }
     if (!this.cur || this.curPage !== i) return;
     this.cur.pts.push(this.pos(e));
+    this.armRestCorrect(i);
     if (this.cur.marker) { this.redrawAll(); return; }
     const ctx = this.ctxOf(i); if (!ctx) return;
     const p = this.cur.pts, n = p.length;
     this.styleFor(ctx, this.cur);
     ctx.beginPath(); ctx.moveTo(p[n - 2][0], p[n - 2][1]); ctx.lineTo(p[n - 1][0], p[n - 1][1]); ctx.stroke(); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
   }
+  // Live shape correction: while the pen/mouse is still resting on the page (not lifted), a
+  // short pause with no movement is treated as "hold still to fix this" — the same gesture
+  // most drawing apps use, but instant rather than making you wait after lifting. Lifting the
+  // pen before the pause completes leaves the handwriting exactly as drawn.
+  armRestCorrect(i) {
+    clearTimeout(this.restTimer);
+    this.restTimer = setTimeout(() => this.tryLiveCorrect(i), 450);
+  }
+  tryLiveCorrect(i) {
+    if (!this.cur || this.curPage !== i || this.corrected) return;
+    const shape = this.recognizeShape(this.cur.pts);
+    if (!shape) return;
+    this.cur.pts = shape.pts;
+    this.corrected = true;
+    this.redrawAll();
+  }
+  pointInPoly(pt, poly) {
+    let inside = false;
+    for (let a = 0, b = poly.length - 1; a < poly.length; b = a++) {
+      const xi = poly[a][0], yi = poly[a][1], xj = poly[b][0], yj = poly[b][1];
+      const hit = ((yi > pt[1]) !== (yj > pt[1])) && (pt[0] < (xj - xi) * (pt[1] - yi) / (yj - yi) + xi);
+      if (hit) inside = !inside;
+    }
+    return inside;
+  }
   up(e) {
     if (e && e.pointerType === 'touch') return;
     if (e && e.currentTarget) e.currentTarget.style.touchAction = 'manipulation'; // unlock finger-scroll again now that the stroke is done
     clearTimeout(this.holdTimer); this.holdTimer = null;
+    clearTimeout(this.restTimer); this.restTimer = null;
     if (this.holdActive) {
       this.holdActive = false;
       this.erasing = false;
@@ -942,16 +1036,31 @@ class Component extends DCLogic {
     this.erasing = false;
     if (this.lassoing) {
       this.lassoing = false;
-      const r = this.selRect, note = this.note();
-      if (!r || !note) return;
+      const note = this.note();
+      if (this.state.selMode === 'freeform') {
+        const fp = this.selPath; this.selPath = null;
+        if (!fp || fp.pts.length < 3 || !note) { this.redrawAll(); return; }
+        const xs = fp.pts.map(p => p[0]), ys = fp.pts.map(p => p[1]);
+        const x0 = Math.min.apply(null, xs), x1 = Math.max.apply(null, xs), y0 = Math.min.apply(null, ys), y1 = Math.max.apply(null, ys);
+        if (x1 - x0 < 12 || y1 - y0 < 12) { this.redrawAll(); return; }
+        const idxs = [];
+        note.pages[fp.page].forEach((it, k) => {
+          const b = this.bbox(it), cx = (b[0] + b[2]) / 2, cy = (b[1] + b[3]) / 2;
+          if (this.pointInPoly([cx, cy], fp.pts)) idxs.push(k);
+        });
+        this.setState({ sel: { page: fp.page, idxs, x0, y0, x1, y1, poly: fp.pts } });
+        return;
+      }
+      const r = this.selRect; this.selRect = null;
+      if (!r || !note) { this.redrawAll(); return; }
       const x0 = Math.min(r.x0, r.x1), x1 = Math.max(r.x0, r.x1), y0 = Math.min(r.y0, r.y1), y1 = Math.max(r.y0, r.y1);
-      if (x1 - x0 < 12 || y1 - y0 < 12) { this.selRect = null; this.redrawAll(); return; }
+      if (x1 - x0 < 12 || y1 - y0 < 12) { this.redrawAll(); return; }
       const idxs = [];
       note.pages[r.page].forEach((it, k) => {
         const b = this.bbox(it);
         if (b[0] >= x0 - 2 && b[1] >= y0 - 2 && b[2] <= x1 + 2 && b[3] <= y1 + 2) idxs.push(k);
       });
-      this.setState({ sel: { page: r.page, idxs, x0, y0, x1, y1 } });
+      this.setState({ sel: { page: r.page, idxs, x0, y0, x1, y1, poly: null } });
       return;
     }
     if (!this.cur) return;
@@ -963,7 +1072,6 @@ class Component extends DCLogic {
       const pages = n.pages.map((pg, k) => k === i ? [...pg, s] : pg);
       return { ...n, pages: grow ? [...pages, []] : pages };
     });
-    this.scheduleShapeAssist(note.id, i, s);
   }
   // Shape assist: looks at a just-finished stroke and decides whether it was clearly *trying*
   // to be a line, a rectangle, or a circle/ellipse — the same kind of "clean it up for me"
@@ -1014,29 +1122,6 @@ class Component extends DCLogic {
       return { pts: [[minX, minY], [maxX, minY], [maxX, maxY], [minX, maxY], [minX, minY]] };
     }
     return null;
-  }
-  // Waits a beat, then — if that exact stroke is still there, untouched — swaps it for the
-  // clean shape recognizeShape() found, if any.
-  scheduleShapeAssist(noteId, pageIdx, strokeRef) {
-    const shape = this.recognizeShape(strokeRef.pts);
-    if (!shape) return;
-    setTimeout(() => {
-      let changed = false;
-      const subjects = this.state.subjects.map(sub => ({
-        ...sub,
-        notes: sub.notes.map(n => {
-          if (n.id !== noteId || !n.pages[pageIdx]) return n;
-          const pg = n.pages[pageIdx];
-          const idx = pg.indexOf(strokeRef);
-          if (idx === -1) return n;
-          const nextPage = pg.slice();
-          nextPage[idx] = { ...strokeRef, pts: shape.pts };
-          changed = true;
-          return { ...n, pages: n.pages.map((p, k) => k === pageIdx ? nextPage : p) };
-        })
-      }));
-      if (changed) { this.setSubjects(subjects); this.redrawAll(); }
-    }, 1200);
   }
   erase(i, pt) {
     const n = this.note(); if (!n) return;
@@ -1287,20 +1372,18 @@ class Component extends DCLogic {
       },
       onTextKey: (e) => { if (e.key === 'Enter' || e.key === 'Escape') this.finishText(); },
       commitText: () => this.finishText(),
-      selActions: [
-        { label: 'Cut', act: () => this.selAction('cut') },
-        { label: 'Copy', act: () => this.selAction('copy') },
-        { label: 'Delete', act: () => this.selAction('delete'), color: '#b4322a' },
-        { label: 'Cancel', act: () => this.selAction('clear') }
-      ].map(a => ({ ...a, color: a.color || 'var(--color-text)' })),
-      pasteHere: () => {
-        if (!this.clipItems) return;
-        const i = Math.min(this.lastPage, openNote.pages.length - 1);
-        this.mutateNote(n => ({ ...n, pages: n.pages.map((pg, k) => k === i
-          ? [...pg, ...this.clipItems.map(it => it.pts
-            ? { ...it, pts: it.pts.map(p => [p[0] + 24, p[1] + 24]) }
-            : { ...it, x: it.x + 24, y: it.y + 24 })] : pg) }));
-      },
+      selActions: (() => {
+        const st_ = this.state.sel;
+        const base = [
+          { label: 'Copy', act: () => this.selAction('copy') },
+          { label: 'Cut', act: () => this.selAction('cut') }
+        ];
+        if (this.clipItems) base.push({ label: 'Paste', act: () => { const page = st_.page; this.selAction('clear'); this.pasteAt(page); } });
+        base.push({ label: 'Delete', act: () => this.selAction('delete'), color: '#b4322a' });
+        base.push({ label: 'Cancel', act: () => this.selAction('clear') });
+        return base.map((a, i) => ({ ...a, color: a.color || 'var(--color-text)', rule: i === 0 ? 'transparent' : 'var(--color-divider)' }));
+      })(),
+      pasteHere: () => this.pasteAt(this.lastPage),
       hasClipItems: !!this.clipItems,
       pages: openNote ? openNote.pages.map((pg, i) => ({
         num: (i + 1) + ' / ' + openNote.pages.length,
@@ -1412,8 +1495,12 @@ class Component extends DCLogic {
           release: () => this.endPress(),
           pick: () => {
             if (t.id === 'addpage') { this.setState({ pop: st.pop === 'insert' ? null : 'insert' }); return; }
-            if (t.id === 'more') { this.setState({ pop: st.pop === 'sizes' ? null : 'sizes' }); return; }
             if (t.id === 'mic') { this.setState({ pop: null }); return; }
+            if (t.id === 'lasso') {
+              if (st.tool !== 'lasso') { this.setState({ tool: 'lasso', pop: null, sel: null }); return; }
+              this.setState({ pop: st.pop === 'selectMode' ? null : 'selectMode' });
+              return;
+            }
             this.setState({ tool: t.id, pop: null, sel: null });
           } };
       }),
@@ -1422,6 +1509,14 @@ class Component extends DCLogic {
         label: z.label, dot: z.dot, pick: () => this.setState({ size: i, pop: null }),
         bg: st.size === i ? 'var(--color-accent-100)' : 'transparent'
       })),
+      selModeOpen: st.pop === 'selectMode',
+      freeformBorder: st.selMode === 'freeform' ? 'var(--color-accent)' : 'var(--color-divider)',
+      freeformBg: st.selMode === 'freeform' ? 'var(--color-accent-100)' : 'transparent',
+      boxedBorder: st.selMode === 'boxed' ? 'var(--color-accent)' : 'var(--color-divider)',
+      boxedBg: st.selMode === 'boxed' ? 'var(--color-accent-100)' : 'transparent',
+      pickFreeform: () => this.setState({ selMode: 'freeform', pop: null }),
+      pickBoxed: () => this.setState({ selMode: 'boxed', pop: null }),
+      toggleTray: () => this.setState({ pop: st.pop === 'more' ? null : 'more' }),
       ink: st.ink,
       quickInks: st.quick.map(v => {
         const found = this.inkPalette.find(c => c.value === v) || { label: '', value: v };
