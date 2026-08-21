@@ -23,7 +23,7 @@
 
 <style>
   body{margin:0;background:var(--color-bg)}
-  .nb{font-family:var(--font-body);-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;-webkit-user-drag:none}
+  .nb{font-family:var(--font-body);-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;-webkit-user-drag:none;touch-action:pan-x pan-y}
   .nb input{font-family:var(--font-body)}
   .nb input,.nb textarea{-webkit-user-select:text;user-select:text}
   .nb canvas{-webkit-user-drag:none;-webkit-touch-callout:none}
@@ -123,7 +123,7 @@
   <sc-if value="{{ inEditor }}" hint-placeholder-val="{{ false }}">
     <div style="display:flex;width:100%;height:100%">
     <div style="position:relative;flex:1;min-width:0;display:flex;flex-direction:column;height:100%">
-      <div ref="{{ toolbarRef }}" style="position:fixed;top:12px;inset-inline:16px;z-index:30;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;pointer-events:none">
+      <div style="position:fixed;top:12px;inset-inline:16px;z-index:30;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;pointer-events:none">
 
         <button onClick="{{ closeNote }}" title="Back" style="display:flex;align-items:center;justify-content:center;width:48px;height:48px;padding:0;border:1px solid var(--color-divider);border-radius:16px;background:#fbfaf8;box-shadow:var(--shadow-md);cursor:pointer;color:var(--color-text);pointer-events:auto" style-hover="background:var(--color-neutral-200)">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"></path><path d="M12 19l-7-7 7-7"></path></svg>
@@ -169,7 +169,7 @@
         </div>
 
         <sc-if value="{{ insertOpen }}" hint-placeholder-val="{{ false }}">
-          <div style="position:absolute;top:100%;left:50%;transform:translateX(-50%);z-index:36;width:214px;padding:5px;border:1px solid var(--color-divider);border-radius:16px;background:#fbfaf8;box-shadow:var(--shadow-lg);pointer-events:auto">
+          <div style="position:absolute;top:104px;left:50%;transform:translateX(-50%);z-index:36;width:214px;padding:5px;border:1px solid var(--color-divider);border-radius:16px;background:#fbfaf8;box-shadow:var(--shadow-lg);pointer-events:auto">
             <button onClick="{{ pickImage }}" style="display:flex;align-items:center;justify-content:space-between;width:100%;padding:9px 11px;border:0;border-radius:var(--radius-md);background:transparent;cursor:pointer;font-family:var(--font-body);font-size:14.5px;color:var(--color-text)" style-hover="background:var(--color-neutral-200)">
               <span>Photo from device</span>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity:.75"><rect x="3.5" y="5" width="17" height="14" rx="2.4"></rect><circle cx="9" cy="10" r="1.6"></circle><path d="M4 17l5-4.5 4 3.5 3-2.5 4 3.5"></path></svg>
@@ -192,7 +192,7 @@
         </sc-if>
 
         <sc-if value="{{ sizesOpen }}" hint-placeholder-val="{{ false }}">
-          <div style="position:absolute;top:100%;left:50%;transform:translateX(-50%);z-index:36;display:flex;align-items:center;gap:4px;padding:7px 9px;border:1px solid var(--color-divider);border-radius:16px;background:#fbfaf8;box-shadow:var(--shadow-lg);pointer-events:auto">
+          <div style="position:absolute;top:104px;left:50%;transform:translateX(-50%);z-index:36;display:flex;align-items:center;gap:4px;padding:7px 9px;border:1px solid var(--color-divider);border-radius:16px;background:#fbfaf8;box-shadow:var(--shadow-lg);pointer-events:auto">
             <sc-for list="{{ sizes }}" as="z" hint-placeholder-count="4">
               <button onClick="{{ z.pick }}" title="{{ z.label }}" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;width:52px;padding:6px 0;border:0;border-radius:var(--radius-md);background:{{ z.bg }};cursor:pointer;font-family:var(--font-body);font-size:10.5px;color:var(--color-text)" style-hover="background:var(--color-neutral-200)">
                 <span style="border-radius:50%;background:var(--color-text);width:{{ z.dot }};height:{{ z.dot }}"></span>
@@ -203,7 +203,7 @@
         </sc-if>
 
         <sc-if value="{{ selModeOpen }}" hint-placeholder-val="{{ false }}">
-          <div style="position:absolute;top:100%;left:50%;transform:translateX(-50%);z-index:36;display:flex;align-items:center;gap:5px;padding:5px;border:1px solid var(--color-divider);border-radius:16px;background:#fbfaf8;box-shadow:var(--shadow-lg);pointer-events:auto">
+          <div style="position:absolute;top:104px;left:50%;transform:translateX(-50%);z-index:36;display:flex;align-items:center;gap:5px;padding:5px;border:1px solid var(--color-divider);border-radius:16px;background:#fbfaf8;box-shadow:var(--shadow-lg);pointer-events:auto">
             <button onClick="{{ pickFreeform }}" style="display:flex;align-items:center;gap:7px;padding:8px 15px;border:1px solid {{ freeformBorder }};border-radius:11px;background:{{ freeformBg }};cursor:pointer;font-family:var(--font-body);font-size:13.5px;color:var(--color-text)" style-hover="border-color:var(--color-accent-400)">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="2.4 2.6"><path d="M4.5 12.2c-.3-3.7 2.6-6.9 6.4-7.1 3.9-.2 5.9 2 7.8 4 1.9 2 2.9 4.6.9 6.5-2 1.9-4.7.6-6.3-.3-1.6-.9-2.6.4-2.1 2 .5 1.6 2.6 2.6 5 2 2.4-.6 3.7-2.1 3.7-2.1"></path></svg>
               <span>Freeform</span>
@@ -571,7 +571,7 @@ class Component extends DCLogic {
             quick: ['#1c1c1e', '#ff3b30', '#007aff', '#ff9500'] };
 
   undone = [];
-  clip = null; template = null; clipItems = null; selRect = null; selPath = null;
+  clip = null; template = null; clipItems = null; selRect = null; selPath = null; resizing = null;
   fileRef = React.createRef();
   insertImage(file) {
     const reader = new FileReader();
@@ -730,66 +730,7 @@ class Component extends DCLogic {
     const top = Math.max(12, Math.min(y + 8, window.innerHeight - h - 12));
     this.setState({ menu: { kind, id, title, left, top }, pressing: null });
   }
-  componentWillUnmount() {
-    clearTimeout(this.pressTimer);
-    if (window.visualViewport) {
-      window.visualViewport.removeEventListener('resize', this.onViewportChange);
-      window.visualViewport.removeEventListener('scroll', this.onViewportChange);
-    }
-    cancelAnimationFrame(this.viewportLoopId);
-  }
-  // Belt-and-suspenders on top of the resize/scroll listeners below: on real hardware a live
-  // two-finger pinch apparently doesn't fire those events promptly/often enough to keep the
-  // counter-scale glued to the gesture (reported: the toolbar visibly zoomed along with the note
-  // for a moment before/instead of snapping static). A plain rAF loop polls the actual values
-  // every frame regardless of event timing, so it can't fall behind a live gesture.
-  lastVVKey = '';
-  viewportLoop = () => {
-    const vv = window.visualViewport;
-    if (vv) {
-      const key = vv.scale + '|' + vv.offsetLeft + '|' + vv.offsetTop;
-      if (key !== this.lastVVKey) { this.lastVVKey = key; this.onViewportChange(); }
-    }
-    this.viewportLoopId = requestAnimationFrame(this.viewportLoop);
-  };
-
-  // ---------- keep the toolbar a constant on-screen size through native pinch-zoom ----------
-  // Pinch-zoom in Safari is a compositor-level magnification of the whole rendered page —
-  // there's no CSS way to exempt one element from it, and reimplementing pinch by hand (scoping
-  // a transform to just the note content) turned out to cause real rendering corruption on real
-  // hardware (see project notes) even though it worked perfectly in every headless/simulated
-  // test. This instead leaves native pinch-zoom completely alone — the safer, standard technique
-  // — and just counter-scales the toolbar in response to it, via the VisualViewport API, which
-  // reports the live zoom level and pan offset without needing any custom touch handling at all.
-  //
-  // The toolbar wrapper's `left`/`top`/`width` are normally plain CSS (16px/12px margins, full
-  // width) — layout math that's completely zoom-oblivious, since CSS layout itself never changes
-  // under pinch-zoom (only the *rendered pixels* get magnified afterwards, like a photo). To make
-  // it render at a constant *screen* size, this scales it by 1/scale (which the compositor's own
-  // magnification exactly cancels out) and grows its layout width/margins by `scale` to
-  // compensate, so the post-shrink rendered size still lands on the same on-screen pixels. `left`/
-  // `top` track `visualViewport.offsetLeft/Top` (also pre-shrunk by `1/scale`) so it stays pinned
-  // to the visible corner as the user pans around while zoomed in, instead of drifting off-screen.
-  toolbarRef = React.createRef();
-  onViewportChange = () => {
-    const vv = window.visualViewport, el = this.toolbarRef.current;
-    if (!vv || !el) return;
-    const s = vv.scale || 1, inv = 1 / s;
-    const w0 = window.innerWidth;
-    // The scale transform below shrinks *both* dimensions, not just width — measure the
-    // wrapper's natural (unconstrained) height fresh each time, since offsetHeight is a layout
-    // metric transforms don't affect, then pre-grow it by `s` the same way width is, so it also
-    // renders back at its true natural size instead of looking vertically squashed while zoomed.
-    el.style.height = 'auto';
-    const naturalH = el.offsetHeight;
-    el.style.transformOrigin = '0 0';
-    el.style.left = (vv.offsetLeft + 16 * inv) + 'px';
-    el.style.top = (vv.offsetTop + 12 * inv) + 'px';
-    el.style.right = 'auto';
-    el.style.width = ((w0 - 32) * s) + 'px';
-    el.style.height = (naturalH * s) + 'px';
-    el.style.transform = 'scale(' + inv + ')';
-  };
+  componentWillUnmount() { clearTimeout(this.pressTimer); }
 
   PW = 820; PH = 1100;
   sizes = [{ label: 'Fine', w: 1.5, dot: '4px' }, { label: 'Medium', w: 2.6, dot: '6px' }, { label: 'Bold', w: 4.5, dot: '9px' }, { label: 'Heavy', w: 7.5, dot: '13px' }];
@@ -869,15 +810,10 @@ class Component extends DCLogic {
     try { const raw = localStorage.getItem(this.key); if (raw) subjects = JSON.parse(raw); } catch (e) {}
     if (subjects) subjects = subjects.map(s => ({ ...s, notes: s.notes.map(n => n.pages ? n : { ...n, pages: [n.strokes || []] }) }));
     this.setState({ subjects: subjects && subjects.length ? subjects : this.buildSeed() });
-    if (window.visualViewport) {
-      window.visualViewport.addEventListener('resize', this.onViewportChange);
-      window.visualViewport.addEventListener('scroll', this.onViewportChange);
-    }
-    this.viewportLoopId = requestAnimationFrame(this.viewportLoop);
   }
   save(subjects) { try { localStorage.setItem(this.key, JSON.stringify(subjects)); } catch (e) {} }
   setSubjects(subjects) { this.save(subjects); this.setState({ subjects }); }
-  componentDidUpdate() { this.redrawAll(); this.onViewportChange(); }
+  componentDidUpdate() { this.redrawAll(); }
 
   // ---------- drawing ----------
   els = {};
@@ -918,16 +854,68 @@ class Component extends DCLogic {
     if (!s.pts || !s.pts.length) return;
     this.styleFor(ctx, s);
     ctx.beginPath(); ctx.moveTo(s.pts[0][0], s.pts[0][1]);
-    for (let i = 1; i < s.pts.length; i++) ctx.lineTo(s.pts[i][0], s.pts[i][1]);
-    if (s.pts.length === 1) ctx.lineTo(s.pts[0][0] + 0.1, s.pts[0][1]);
+    if (s.pts.length === 1) {
+      ctx.lineTo(s.pts[0][0] + 0.1, s.pts[0][1]);
+    } else if (s.pts.length === 2 || s.shape) {
+      // Exactly 2 points (a plain drag) or a shape-assist result (straightened line, or the
+      // exact vertices/arc of a recognized rectangle/circle) — draw the raw segments as-is so
+      // straight edges and corners stay crisp instead of getting rounded off.
+      for (let i = 1; i < s.pts.length; i++) ctx.lineTo(s.pts[i][0], s.pts[i][1]);
+    } else {
+      // Freehand handwriting: raw pointer samples connected by straight lineTo segments look
+      // visibly faceted/jagged on faster strokes (each sampled point is a hard kink). Smooth
+      // it into one continuous curve by running the line through the midpoint of each
+      // consecutive pair of points, using the raw point itself as that segment's control.
+      for (let i = 1; i < s.pts.length - 1; i++) {
+        const mx = (s.pts[i][0] + s.pts[i + 1][0]) / 2, my = (s.pts[i][1] + s.pts[i + 1][1]) / 2;
+        ctx.quadraticCurveTo(s.pts[i][0], s.pts[i][1], mx, my);
+      }
+      const n = s.pts.length;
+      ctx.quadraticCurveTo(s.pts[n - 2][0], s.pts[n - 2][1], s.pts[n - 1][0], s.pts[n - 1][1]);
+    }
     ctx.stroke(); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
+  }
+  // Live-resize helpers: scale a point (or a whole item) away from the fixed anchor corner —
+  // used both for the drag preview (redrawAll, below) and for the final committed mutation
+  // (up()). Kept as a single source of truth so the preview and the real result always match.
+  resizePoint(r, p) { const [ax, ay] = r.anchor, s = r.scale; return [ax + (p[0] - ax) * s, ay + (p[1] - ay) * s]; }
+  resizeItem(r, it) {
+    if (it.type === 'img') { const [x, y] = this.resizePoint(r, [it.x, it.y]); return { ...it, x, y, w: it.w * r.scale, h: it.h * r.scale }; }
+    if (it.type === 'text') { const [x, y] = this.resizePoint(r, [it.x, it.y]); return { ...it, x, y, size: it.size * r.scale }; }
+    return { ...it, pts: it.pts.map(p => this.resizePoint(r, p)), w: it.w * r.scale };
+  }
+  resizeBBox(r) {
+    const a = this.resizePoint(r, [r.x0, r.y0]), b = this.resizePoint(r, [r.x1, r.y1]);
+    return { x0: Math.min(a[0], b[0]), y0: Math.min(a[1], b[1]), x1: Math.max(a[0], b[0]), y1: Math.max(a[1], b[1]) };
+  }
+  // Which of the 4 corner handles (if any) a pointer-down landed on — a bit more forgiving than
+  // the 6px dots drawn on screen, since grabbing a small circle precisely is fiddly even with a pen.
+  hitHandle(p, sel) {
+    const corners = { nw: [sel.x0, sel.y0], ne: [sel.x1, sel.y0], sw: [sel.x0, sel.y1], se: [sel.x1, sel.y1] };
+    for (const k in corners) if (Math.hypot(p[0] - corners[k][0], p[1] - corners[k][1]) < 16) return k;
+    return null;
+  }
+  beginResize(i, sel, corner) {
+    const opposite = { nw: 'se', ne: 'sw', sw: 'ne', se: 'nw' }[corner];
+    const corners = { nw: [sel.x0, sel.y0], ne: [sel.x1, sel.y0], sw: [sel.x0, sel.y1], se: [sel.x1, sel.y1] };
+    const note = this.note(); if (!note) return;
+    this.resizing = {
+      page: i, idxs: sel.idxs.slice(),
+      items: sel.idxs.map(k => JSON.parse(JSON.stringify(note.pages[i][k]))),
+      anchor: corners[opposite], startCorner: corners[corner],
+      x0: sel.x0, y0: sel.y0, x1: sel.x1, y1: sel.y1, scale: 1
+    };
   }
   redrawAll() {
     const n = this.note(); if (!n) return;
     n.pages.forEach((strokes, i) => {
       const ctx = this.ctxOf(i); if (!ctx) return;
       ctx.clearRect(0, 0, this.PW, this.PH);
-      strokes.forEach(s => this.drawStroke(ctx, s));
+      const rz = this.resizing && this.resizing.page === i ? this.resizing : null;
+      strokes.forEach((s, k) => {
+        const pos = rz ? rz.idxs.indexOf(k) : -1;
+        this.drawStroke(ctx, pos >= 0 ? this.resizeItem(rz, rz.items[pos]) : s);
+      });
       if (this.cur && this.curPage === i) this.drawStroke(ctx, this.cur);
       const r = this.selRect;
       if (r && r.page === i) {
@@ -942,7 +930,13 @@ class Component extends DCLogic {
         for (let k = 1; k < fp.pts.length; k++) ctx.lineTo(fp.pts[k][0], fp.pts[k][1]);
         ctx.stroke(); ctx.restore();
       }
-      const sel = this.state.sel;
+      let sel = this.state.sel;
+      // While actively dragging a handle, the outline + handles track the live scale too,
+      // so the selection box visually grows/shrinks in lockstep with the ink underneath it.
+      if (sel && rz && sel.page === i) {
+        const bb = this.resizeBBox(rz);
+        sel = { ...sel, ...bb, poly: sel.poly ? sel.poly.map(p => this.resizePoint(rz, p)) : null };
+      }
       if (sel && sel.page === i) {
         ctx.save(); ctx.setLineDash([6, 4]); ctx.strokeStyle = '#2f8cff'; ctx.lineWidth = 1.4;
         if (sel.poly && sel.poly.length > 1) {
@@ -998,6 +992,11 @@ class Component extends DCLogic {
     }
     if (tool === 'lasso') {
       const p = this.pos(e);
+      const sel = this.state.sel;
+      if (sel && sel.page === i) {
+        const corner = this.hitHandle(p, sel);
+        if (corner) { this.beginResize(i, sel, corner); return; }
+      }
       if (this.state.selMode === 'freeform') this.selPath = { page: i, pts: [p] };
       else this.selRect = { page: i, x0: p[0], y0: p[1], x1: p[0], y1: p[1] };
       this.lassoing = true;
@@ -1035,6 +1034,14 @@ class Component extends DCLogic {
     if (this.holdTimer && !this.holdActive && this.holdOrigin) {
       const p = this.pos(e);
       if (Math.hypot(p[0] - this.holdOrigin[0], p[1] - this.holdOrigin[1]) > 8) { clearTimeout(this.holdTimer); this.holdTimer = null; }
+    }
+    if (this.resizing && this.resizing.page === i) {
+      const r = this.resizing, p = this.pos(e);
+      const distOrig = Math.hypot(r.startCorner[0] - r.anchor[0], r.startCorner[1] - r.anchor[1]) || 1;
+      const distNow = Math.hypot(p[0] - r.anchor[0], p[1] - r.anchor[1]);
+      r.scale = Math.max(0.15, Math.min(8, distNow / distOrig));
+      this.redrawAll();
+      return;
     }
     if (this.lassoing) {
       if (this.state.selMode === 'freeform') {
@@ -1095,6 +1102,23 @@ class Component extends DCLogic {
     if (e && e.currentTarget) e.currentTarget.style.touchAction = 'manipulation'; // unlock finger-scroll again now that the stroke is done
     clearTimeout(this.holdTimer); this.holdTimer = null;
     clearTimeout(this.restTimer); this.restTimer = null;
+    if (this.resizing) {
+      const r = this.resizing; this.resizing = null;
+      const bb = this.resizeBBox(r);
+      const sel = this.state.sel;
+      // Only worth a mutateNote (and an undo step) if the drag actually changed anything —
+      // a tap-and-release on a handle with no real movement shouldn't touch the note at all.
+      if (Math.abs(r.scale - 1) > 0.01) {
+        this.mutateNote(n => ({
+          ...n, pages: n.pages.map((pg, k) => k !== r.page ? pg : pg.map((it, idx) => {
+            const pos = r.idxs.indexOf(idx);
+            return pos >= 0 ? this.resizeItem(r, r.items[pos]) : it;
+          }))
+        }));
+      }
+      if (sel) this.setState({ sel: { ...sel, ...bb, poly: sel.poly ? sel.poly.map(p => this.resizePoint(r, p)) : null } });
+      return;
+    }
     if (this.holdActive) {
       this.holdActive = false;
       this.erasing = false;
@@ -1481,7 +1505,6 @@ class Component extends DCLogic {
       })) : [],
       addPage: () => this.mutateNote(n => ({ ...n, pages: [...n.pages, this.template ? this.template.slice() : []] })),
       scrollRef: this.scrollRef,
-      toolbarRef: this.toolbarRef,
       pagesOpen: st.pagesOpen,
       // Top-right popovers are position:fixed (so they stay put while the note scrolls), which
       // means their inset-inline-end is measured from the viewport edge, not the editor column's
