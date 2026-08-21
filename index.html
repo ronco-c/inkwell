@@ -123,7 +123,7 @@
   <sc-if value="{{ inEditor }}" hint-placeholder-val="{{ false }}">
     <div style="display:flex;width:100%;height:100%">
     <div style="position:relative;flex:1;min-width:0;display:flex;flex-direction:column;height:100%">
-      <div style="position:fixed;top:12px;inset-inline:16px;z-index:30;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;pointer-events:none">
+      <div ref="{{ toolbarRef }}" style="position:fixed;top:12px;inset-inline:16px;z-index:30;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;pointer-events:none">
 
         <div style="display:flex;align-items:center;gap:10px;padding:7px 12px;border:1px solid var(--color-divider);border-radius:14px;background:#fbfaf8;box-shadow:var(--shadow-md);pointer-events:auto">
           <button onClick="{{ closeNote }}" title="Back" style="display:flex;align-items:center;justify-content:center;width:30px;height:28px;padding:0;border:0;border-radius:var(--radius-md);background:transparent;cursor:pointer;color:var(--color-text)" style-hover="background:var(--color-neutral-200)">
@@ -176,7 +176,7 @@
         </div>
 
         <sc-if value="{{ insertOpen }}" hint-placeholder-val="{{ false }}">
-          <div style="position:absolute;top:104px;left:50%;transform:translateX(-50%);z-index:36;width:214px;padding:5px;border:1px solid var(--color-divider);border-radius:16px;background:#fbfaf8;box-shadow:var(--shadow-lg);pointer-events:auto">
+          <div style="position:absolute;top:100%;left:50%;transform:translateX(-50%);z-index:36;width:214px;padding:5px;border:1px solid var(--color-divider);border-radius:16px;background:#fbfaf8;box-shadow:var(--shadow-lg);pointer-events:auto">
             <button onClick="{{ pickImage }}" style="display:flex;align-items:center;justify-content:space-between;width:100%;padding:9px 11px;border:0;border-radius:var(--radius-md);background:transparent;cursor:pointer;font-family:var(--font-body);font-size:14.5px;color:var(--color-text)" style-hover="background:var(--color-neutral-200)">
               <span>Photo from device</span>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity:.75"><rect x="3.5" y="5" width="17" height="14" rx="2.4"></rect><circle cx="9" cy="10" r="1.6"></circle><path d="M4 17l5-4.5 4 3.5 3-2.5 4 3.5"></path></svg>
@@ -199,7 +199,7 @@
         </sc-if>
 
         <sc-if value="{{ sizesOpen }}" hint-placeholder-val="{{ false }}">
-          <div style="position:absolute;top:104px;left:50%;transform:translateX(-50%);z-index:36;display:flex;align-items:center;gap:4px;padding:7px 9px;border:1px solid var(--color-divider);border-radius:16px;background:#fbfaf8;box-shadow:var(--shadow-lg);pointer-events:auto">
+          <div style="position:absolute;top:100%;left:50%;transform:translateX(-50%);z-index:36;display:flex;align-items:center;gap:4px;padding:7px 9px;border:1px solid var(--color-divider);border-radius:16px;background:#fbfaf8;box-shadow:var(--shadow-lg);pointer-events:auto">
             <sc-for list="{{ sizes }}" as="z" hint-placeholder-count="4">
               <button onClick="{{ z.pick }}" title="{{ z.label }}" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;width:52px;padding:6px 0;border:0;border-radius:var(--radius-md);background:{{ z.bg }};cursor:pointer;font-family:var(--font-body);font-size:10.5px;color:var(--color-text)" style-hover="background:var(--color-neutral-200)">
                 <span style="border-radius:50%;background:var(--color-text);width:{{ z.dot }};height:{{ z.dot }}"></span>
@@ -210,7 +210,7 @@
         </sc-if>
 
         <sc-if value="{{ selModeOpen }}" hint-placeholder-val="{{ false }}">
-          <div style="position:absolute;top:104px;left:50%;transform:translateX(-50%);z-index:36;display:flex;align-items:center;gap:5px;padding:5px;border:1px solid var(--color-divider);border-radius:16px;background:#fbfaf8;box-shadow:var(--shadow-lg);pointer-events:auto">
+          <div style="position:absolute;top:100%;left:50%;transform:translateX(-50%);z-index:36;display:flex;align-items:center;gap:5px;padding:5px;border:1px solid var(--color-divider);border-radius:16px;background:#fbfaf8;box-shadow:var(--shadow-lg);pointer-events:auto">
             <button onClick="{{ pickFreeform }}" style="display:flex;align-items:center;gap:7px;padding:8px 15px;border:1px solid {{ freeformBorder }};border-radius:11px;background:{{ freeformBg }};cursor:pointer;font-family:var(--font-body);font-size:13.5px;color:var(--color-text)" style-hover="border-color:var(--color-accent-400)">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="2.4 2.6"><path d="M4.5 12.2c-.3-3.7 2.6-6.9 6.4-7.1 3.9-.2 5.9 2 7.8 4 1.9 2 2.9 4.6.9 6.5-2 1.9-4.7.6-6.3-.3-1.6-.9-2.6.4-2.1 2 .5 1.6 2.6 2.6 5 2 2.4-.6 3.7-2.1 3.7-2.1"></path></svg>
               <span>Freeform</span>
@@ -737,7 +737,51 @@ class Component extends DCLogic {
     const top = Math.max(12, Math.min(y + 8, window.innerHeight - h - 12));
     this.setState({ menu: { kind, id, title, left, top }, pressing: null });
   }
-  componentWillUnmount() { clearTimeout(this.pressTimer); }
+  componentWillUnmount() {
+    clearTimeout(this.pressTimer);
+    if (window.visualViewport) {
+      window.visualViewport.removeEventListener('resize', this.onViewportChange);
+      window.visualViewport.removeEventListener('scroll', this.onViewportChange);
+    }
+  }
+
+  // ---------- keep the toolbar a constant on-screen size through native pinch-zoom ----------
+  // Pinch-zoom in Safari is a compositor-level magnification of the whole rendered page —
+  // there's no CSS way to exempt one element from it, and reimplementing pinch by hand (scoping
+  // a transform to just the note content) turned out to cause real rendering corruption on real
+  // hardware (see project notes) even though it worked perfectly in every headless/simulated
+  // test. This instead leaves native pinch-zoom completely alone — the safer, standard technique
+  // — and just counter-scales the toolbar in response to it, via the VisualViewport API, which
+  // reports the live zoom level and pan offset without needing any custom touch handling at all.
+  //
+  // The toolbar wrapper's `left`/`top`/`width` are normally plain CSS (16px/12px margins, full
+  // width) — layout math that's completely zoom-oblivious, since CSS layout itself never changes
+  // under pinch-zoom (only the *rendered pixels* get magnified afterwards, like a photo). To make
+  // it render at a constant *screen* size, this scales it by 1/scale (which the compositor's own
+  // magnification exactly cancels out) and grows its layout width/margins by `scale` to
+  // compensate, so the post-shrink rendered size still lands on the same on-screen pixels. `left`/
+  // `top` track `visualViewport.offsetLeft/Top` (also pre-shrunk by `1/scale`) so it stays pinned
+  // to the visible corner as the user pans around while zoomed in, instead of drifting off-screen.
+  toolbarRef = React.createRef();
+  onViewportChange = () => {
+    const vv = window.visualViewport, el = this.toolbarRef.current;
+    if (!vv || !el) return;
+    const s = vv.scale || 1, inv = 1 / s;
+    const w0 = window.innerWidth;
+    // The scale transform below shrinks *both* dimensions, not just width — measure the
+    // wrapper's natural (unconstrained) height fresh each time, since offsetHeight is a layout
+    // metric transforms don't affect, then pre-grow it by `s` the same way width is, so it also
+    // renders back at its true natural size instead of looking vertically squashed while zoomed.
+    el.style.height = 'auto';
+    const naturalH = el.offsetHeight;
+    el.style.transformOrigin = '0 0';
+    el.style.left = (vv.offsetLeft + 16 * inv) + 'px';
+    el.style.top = (vv.offsetTop + 12 * inv) + 'px';
+    el.style.right = 'auto';
+    el.style.width = ((w0 - 32) * s) + 'px';
+    el.style.height = (naturalH * s) + 'px';
+    el.style.transform = 'scale(' + inv + ')';
+  };
 
   PW = 820; PH = 1100;
   sizes = [{ label: 'Fine', w: 1.5, dot: '4px' }, { label: 'Medium', w: 2.6, dot: '6px' }, { label: 'Bold', w: 4.5, dot: '9px' }, { label: 'Heavy', w: 7.5, dot: '13px' }];
@@ -817,10 +861,14 @@ class Component extends DCLogic {
     try { const raw = localStorage.getItem(this.key); if (raw) subjects = JSON.parse(raw); } catch (e) {}
     if (subjects) subjects = subjects.map(s => ({ ...s, notes: s.notes.map(n => n.pages ? n : { ...n, pages: [n.strokes || []] }) }));
     this.setState({ subjects: subjects && subjects.length ? subjects : this.buildSeed() });
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', this.onViewportChange);
+      window.visualViewport.addEventListener('scroll', this.onViewportChange);
+    }
   }
   save(subjects) { try { localStorage.setItem(this.key, JSON.stringify(subjects)); } catch (e) {} }
   setSubjects(subjects) { this.save(subjects); this.setState({ subjects }); }
-  componentDidUpdate() { this.redrawAll(); }
+  componentDidUpdate() { this.redrawAll(); this.onViewportChange(); }
 
   // ---------- drawing ----------
   els = {};
@@ -1412,6 +1460,7 @@ class Component extends DCLogic {
       })) : [],
       addPage: () => this.mutateNote(n => ({ ...n, pages: [...n.pages, this.template ? this.template.slice() : []] })),
       scrollRef: this.scrollRef,
+      toolbarRef: this.toolbarRef,
       pagesOpen: st.pagesOpen,
       // Top-right popovers are position:fixed (so they stay put while the note scrolls), which
       // means their inset-inline-end is measured from the viewport edge, not the editor column's
