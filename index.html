@@ -1046,14 +1046,17 @@ class Component extends DCLogic {
     }
     if (this.erasing) { if (this.curPage === i) this.erase(i, this.pos(e)); return; }
     if (!this.cur || this.curPage !== i) return;
-    const p = this.pos(e);
-    this.cur.pts.push(p);
+    // Once a shape has snapped, ignore further micro-jitter so it doesn't get raw points
+    // appended back onto the now-clean {pts} — the stroke stays frozen until pen-up.
+    if (this.corrected) return;
+    const pt = this.pos(e);
+    this.cur.pts.push(pt);
     // Apple Pencil fires pointermove continuously even while the hand is "holding still"
     // (sub-pixel tremor, pressure/tilt-only changes) — only treat it as real movement, and
     // re-arm the rest timer, once it's moved past a small jitter threshold. Otherwise the
     // 450ms window never survives long enough to fire and the shape never gets corrected.
-    if (Math.hypot(p[0] - this.restAnchor[0], p[1] - this.restAnchor[1]) > 3) {
-      this.restAnchor = p;
+    if (Math.hypot(pt[0] - this.restAnchor[0], pt[1] - this.restAnchor[1]) > 3) {
+      this.restAnchor = pt;
       this.armRestCorrect(i);
     }
     if (this.cur.marker) { this.redrawAll(); return; }
