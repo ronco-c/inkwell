@@ -563,12 +563,12 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1200,&quot;height&quot;:860},&quot;defaultPaper&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;squares&quot;,&quot;lines&quot;,&quot;dots&quot;,&quot;fine&quot;,&quot;plain&quot;,&quot;sepia&quot;,&quot;music&quot;,&quot;dark&quot;],&quot;default&quot;:&quot;squares&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Paper&quot;},&quot;autoAddPage&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Paper&quot;}}">
 class Component extends DCLogic {
-  state = { subjects: null, active: 0, openId: null, tool: 'pen', ink: '#201f1d', size: 1, query: '',
+  state = { subjects: null, active: 0, openId: null, tool: 'pen', ink: '#1c1c1e', size: 1, query: '',
             adding: false, newName: '', renameSubj: null, renameNote: null, draft: '',
             editing: false, selected: [], menu: null, pressing: null, pop: null,
             pagesOpen: false, pageQuery: '', pageMenu: null, pageSel: 0,
             textEdit: null, textDraft: '', sel: null, selMode: 'boxed',
-            quick: ['#201f1d', '#b4322a', '#2f5ea8', '#b68235'] };
+            quick: ['#1c1c1e', '#ff3b30', '#007aff', '#ff9500'] };
 
   undone = [];
   clip = null; template = null; clipItems = null; selRect = null; selPath = null;
@@ -736,7 +736,22 @@ class Component extends DCLogic {
       window.visualViewport.removeEventListener('resize', this.onViewportChange);
       window.visualViewport.removeEventListener('scroll', this.onViewportChange);
     }
+    cancelAnimationFrame(this.viewportLoopId);
   }
+  // Belt-and-suspenders on top of the resize/scroll listeners below: on real hardware a live
+  // two-finger pinch apparently doesn't fire those events promptly/often enough to keep the
+  // counter-scale glued to the gesture (reported: the toolbar visibly zoomed along with the note
+  // for a moment before/instead of snapping static). A plain rAF loop polls the actual values
+  // every frame regardless of event timing, so it can't fall behind a live gesture.
+  lastVVKey = '';
+  viewportLoop = () => {
+    const vv = window.visualViewport;
+    if (vv) {
+      const key = vv.scale + '|' + vv.offsetLeft + '|' + vv.offsetTop;
+      if (key !== this.lastVVKey) { this.lastVVKey = key; this.onViewportChange(); }
+    }
+    this.viewportLoopId = requestAnimationFrame(this.viewportLoop);
+  };
 
   // ---------- keep the toolbar a constant on-screen size through native pinch-zoom ----------
   // Pinch-zoom in Safari is a compositor-level magnification of the whole rendered page —
@@ -792,11 +807,11 @@ class Component extends DCLogic {
   paper(id) { return this.papers.find(p => p.id === id) || this.papers[0]; }
 
   inkPalette = [
-    { label: 'Black', value: '#201f1d' }, { label: 'Graphite', value: '#605d5d' }, { label: 'Vermilion', value: '#b4322a' },
-    { label: 'Orange', value: '#d4622a' }, { label: 'Gold', value: '#b68235' }, { label: 'Ochre', value: '#9b7232' },
-    { label: 'Green', value: '#3f7d55' }, { label: 'Olive', value: '#7d9a3b' }, { label: 'Teal', value: '#3f7d8c' },
-    { label: 'Blue', value: '#2f5ea8' }, { label: 'Violet', value: '#7a4fa3' }, { label: 'Magenta', value: '#b0417a' },
-    { label: 'Sepia', value: '#7d5411' }, { label: 'Chalk', value: '#f8f4f4' }
+    { label: 'Black', value: '#1c1c1e' }, { label: 'Gray', value: '#8e8e93' }, { label: 'Red', value: '#ff3b30' },
+    { label: 'Orange', value: '#ff9500' }, { label: 'Yellow', value: '#ffcc00' }, { label: 'Brown', value: '#a2845e' },
+    { label: 'Green', value: '#34c759' }, { label: 'Mint', value: '#00c7be' }, { label: 'Teal', value: '#30b0c7' },
+    { label: 'Blue', value: '#007aff' }, { label: 'Indigo', value: '#5856d6' }, { label: 'Purple', value: '#af52de' },
+    { label: 'Pink', value: '#ff2d55' }, { label: 'White', value: '#ffffff' }
   ];
 
   rng(seed) { let s = seed >>> 0; return () => { s = (s + 0x6D2B79F5) >>> 0; let t = s; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
@@ -858,6 +873,7 @@ class Component extends DCLogic {
       window.visualViewport.addEventListener('resize', this.onViewportChange);
       window.visualViewport.addEventListener('scroll', this.onViewportChange);
     }
+    this.viewportLoopId = requestAnimationFrame(this.viewportLoop);
   }
   save(subjects) { try { localStorage.setItem(this.key, JSON.stringify(subjects)); } catch (e) {} }
   setSubjects(subjects) { this.save(subjects); this.setState({ subjects }); }
@@ -1009,6 +1025,7 @@ class Component extends DCLogic {
     }
     this.cur = { color: this.state.ink, w: this.strokeWidth(), marker: this.state.tool === 'marker', pts: [this.pos(e)] };
     this.corrected = false;
+    this.restAnchor = this.cur.pts[0];
     this.armRestCorrect(i);
     canvasEl.style.touchAction = 'none'; // reassert once more in case the pageSel setState above re-rendered
     this.redrawAll();
@@ -1029,8 +1046,16 @@ class Component extends DCLogic {
     }
     if (this.erasing) { if (this.curPage === i) this.erase(i, this.pos(e)); return; }
     if (!this.cur || this.curPage !== i) return;
-    this.cur.pts.push(this.pos(e));
-    this.armRestCorrect(i);
+    const p = this.pos(e);
+    this.cur.pts.push(p);
+    // Apple Pencil fires pointermove continuously even while the hand is "holding still"
+    // (sub-pixel tremor, pressure/tilt-only changes) — only treat it as real movement, and
+    // re-arm the rest timer, once it's moved past a small jitter threshold. Otherwise the
+    // 450ms window never survives long enough to fire and the shape never gets corrected.
+    if (Math.hypot(p[0] - this.restAnchor[0], p[1] - this.restAnchor[1]) > 3) {
+      this.restAnchor = p;
+      this.armRestCorrect(i);
+    }
     if (this.cur.marker) { this.redrawAll(); return; }
     const ctx = this.ctxOf(i); if (!ctx) return;
     const p = this.cur.pts, n = p.length;
