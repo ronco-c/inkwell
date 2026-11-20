@@ -1,0 +1,599 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.json">
+<title>דירהטוק</title>
+<style>
+  :root{
+    --bg:#000; --fg:#fff; --muted:rgba(255,255,255,.7);
+    --accent:#ff3d6e; --accent2:#22d3c5; --sheet:#16161a; --line:rgba(255,255,255,.12);
+    --nav-h:64px; --safe-b:env(safe-area-inset-bottom,0px); --safe-t:env(safe-area-inset-top,0px);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;height:100%;background:var(--bg);color:var(--fg);
+    font-family:system-ui,-apple-system,"Segoe UI",Rubik,Arial,sans-serif;overscroll-behavior:none}
+  button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+  a{color:inherit;text-decoration:none}
+  input,select,textarea{font:inherit}
+  .hidden{display:none!important}
+
+  /* ---------- Screens ---------- */
+  .screen{position:fixed;inset:0 0 calc(var(--nav-h) + var(--safe-b)) 0;overflow:hidden}
+
+  /* ---------- Feed ---------- */
+  #feed{height:100%;overflow-y:scroll;scroll-snap-type:y mandatory;scrollbar-width:none}
+  #feed::-webkit-scrollbar{display:none}
+  .card{position:relative;height:100%;scroll-snap-align:start;scroll-snap-stop:always;background:#111;overflow:hidden}
+  .card video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#000}
+  .card .shade{position:absolute;inset:0;pointer-events:none;
+    background:linear-gradient(to top,rgba(0,0,0,.75) 0%,rgba(0,0,0,0) 45%),
+               linear-gradient(to bottom,rgba(0,0,0,.4) 0%,rgba(0,0,0,0) 18%)}
+  .info{position:absolute;inset-inline-start:14px;inset-inline-end:84px;bottom:18px;text-shadow:0 1px 3px rgba(0,0,0,.6)}
+  .price{font-size:26px;font-weight:800;letter-spacing:-.5px}
+  .price small{font-size:14px;font-weight:600;opacity:.85}
+  .tags{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}
+  .tag{font-size:13px;padding:3px 9px;border-radius:999px;background:rgba(255,255,255,.18);backdrop-filter:blur(6px)}
+  .tag.deal{background:var(--accent);font-weight:700}
+  .tag.deal.sale{background:#6d5cff}
+  .loc{font-weight:700;font-size:16px}
+  .desc{font-size:14px;color:var(--muted);margin-top:4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .actions{position:absolute;inset-inline-end:10px;bottom:22px;display:flex;flex-direction:column;gap:18px;align-items:center}
+  .act{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:12px;font-weight:600;text-shadow:0 1px 3px rgba(0,0,0,.6)}
+  .act .ic{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;background:rgba(0,0,0,.28);backdrop-filter:blur(6px)}
+  .act svg{width:28px;height:28px}
+  .act.on .ic{color:var(--accent)}
+  .act.saved.on .ic{color:#ffc93d}
+  .act.wa .ic{background:#25d366}
+  .bigheart{position:absolute;left:50%;top:50%;width:110px;height:110px;margin:-55px 0 0 -55px;color:var(--accent);
+    pointer-events:none;opacity:0;transform:scale(.4)}
+  .bigheart.pop{animation:pop .7s ease-out}
+  @keyframes pop{0%{opacity:0;transform:scale(.4)}25%{opacity:1;transform:scale(1.1)}60%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(1.3)}}
+  .mute{position:absolute;top:calc(14px + var(--safe-t));inset-inline-start:14px;width:38px;height:38px;border-radius:50%;
+    display:grid;place-items:center;background:rgba(0,0,0,.35)}
+  .mute svg{width:20px;height:20px}
+  .paused-ind{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:72px;height:72px;opacity:.75;pointer-events:none}
+  .progress{position:absolute;left:0;right:0;bottom:0;height:3px;background:rgba(255,255,255,.15)}
+  .progress i{display:block;height:100%;width:0;background:#fff}
+
+  .topbar{position:fixed;top:0;left:0;right:0;z-index:5;padding:calc(10px + var(--safe-t)) 14px 10px;display:flex;
+    justify-content:center;align-items:center;gap:8px;pointer-events:none}
+  .topbar .logo{font-weight:900;font-size:20px;letter-spacing:-.5px;pointer-events:auto}
+  .topbar .logo b{color:var(--accent)}
+  .topbar .filter-btn{position:absolute;inset-inline-end:14px;top:calc(8px + var(--safe-t));pointer-events:auto;
+    display:flex;align-items:center;gap:6px;padding:7px 12px;border-radius:999px;background:rgba(0,0,0,.4);backdrop-filter:blur(8px);font-size:14px;font-weight:600}
+  .topbar .filter-btn svg{width:18px;height:18px}
+  .topbar .filter-btn .dot{width:8px;height:8px;border-radius:50%;background:var(--accent)}
+
+  .empty{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:30px;gap:14px}
+  .empty svg{width:72px;height:72px;opacity:.85}
+  .empty h2{margin:0;font-size:22px}
+  .empty p{margin:0;color:var(--muted);max-width:300px;line-height:1.5}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:13px 22px;border-radius:12px;font-weight:700;background:var(--accent);color:#fff}
+  .btn.ghost{background:rgba(255,255,255,.1)}
+  .btn:disabled{opacity:.4;cursor:not-allowed}
+
+  /* ---------- Bottom nav ---------- */
+  nav{position:fixed;left:0;right:0;bottom:0;height:calc(var(--nav-h) + var(--safe-b));padding-bottom:var(--safe-b);
+    background:#000;border-top:1px solid var(--line);display:flex;z-index:10}
+  nav button{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:11px;color:rgba(255,255,255,.55)}
+  nav button.active{color:#fff}
+  nav svg{width:26px;height:26px}
+  nav .plus span{width:50px;height:32px;border-radius:10px;display:grid;place-items:center;color:#000;background:#fff;
+    box-shadow:-4px 0 0 var(--accent2),4px 0 0 var(--accent)}
+  nav .plus svg{width:22px;height:22px}
+
+  /* ---------- Pages (upload / saved / mine) ---------- */
+  .page{height:100%;overflow-y:auto;padding:calc(16px + var(--safe-t)) 16px 24px;background:#0b0b0d}
+  .page h1{font-size:22px;margin:4px 0 16px}
+  .field{margin-bottom:14px}
+  .field label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px;font-weight:600}
+  .field input,.field select,.field textarea{width:100%;padding:12px;border-radius:10px;border:1px solid var(--line);background:#17171b;color:#fff;outline:none}
+  .field input:focus,.field select:focus,.field textarea:focus{border-color:var(--accent)}
+  .field textarea{min-height:80px;resize:vertical}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+  .seg{display:flex;background:#17171b;border:1px solid var(--line);border-radius:10px;padding:3px}
+  .seg button{flex:1;padding:9px;border-radius:8px;font-weight:700;color:var(--muted)}
+  .seg button.on{background:var(--accent);color:#fff}
+  .chips{display:flex;flex-wrap:wrap;gap:8px}
+  .chip{padding:7px 12px;border-radius:999px;border:1px solid var(--line);background:#17171b;font-size:13px}
+  .chip.on{border-color:var(--accent);background:rgba(255,61,110,.18)}
+  .drop{border:2px dashed var(--line);border-radius:16px;padding:26px 16px;text-align:center;cursor:pointer;color:var(--muted)}
+  .drop svg{width:44px;height:44px;margin-bottom:6px;color:#fff}
+  .drop b{color:#fff;display:block;font-size:16px;margin-bottom:4px}
+  .preview{position:relative;border-radius:16px;overflow:hidden;background:#000;aspect-ratio:9/16;max-height:52vh;margin:0 auto 10px;}
+  .preview video{width:100%;height:100%;object-fit:cover}
+  .preview .x{position:absolute;top:8px;inset-inline-end:8px;width:34px;height:34px;border-radius:50%;background:rgba(0,0,0,.55);display:grid;place-items:center}
+  .rules{font-size:13px;color:var(--muted);background:#141418;border:1px solid var(--line);border-radius:12px;padding:12px 14px;line-height:1.6;margin-bottom:16px}
+  .rules b{color:#fff}
+  .err{color:#ff6b8a;font-size:13px;margin-top:6px;min-height:1em}
+  .check{display:flex;gap:10px;align-items:flex-start;font-size:14px;margin:6px 0 16px;line-height:1.4}
+  .check input{width:20px;height:20px;margin-top:1px;accent-color:var(--accent)}
+
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:3px}
+  .thumb{position:relative;aspect-ratio:9/14;background:#1b1b20;border-radius:6px;overflow:hidden;cursor:pointer}
+  .thumb video{width:100%;height:100%;object-fit:cover;pointer-events:none}
+  .thumb .tp{position:absolute;bottom:4px;inset-inline-start:6px;font-size:12px;font-weight:800;text-shadow:0 1px 3px #000}
+  .thumb .del{position:absolute;top:4px;inset-inline-end:4px;width:26px;height:26px;border-radius:50%;background:rgba(0,0,0,.6);display:grid;place-items:center}
+  .thumb .del svg{width:15px;height:15px}
+  .profile-head{display:flex;align-items:center;gap:14px;margin-bottom:18px}
+  .avatar{width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:grid;place-items:center;font-size:26px;font-weight:800}
+  .stats{display:flex;gap:18px;font-size:13px;color:var(--muted)}
+  .stats b{display:block;color:#fff;font-size:17px}
+
+  /* ---------- Bottom sheet ---------- */
+  .backdrop{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:20;opacity:0;pointer-events:none;transition:opacity .2s}
+  .backdrop.open{opacity:1;pointer-events:auto}
+  .sheet{position:fixed;left:0;right:0;bottom:0;z-index:21;background:var(--sheet);border-radius:20px 20px 0 0;max-height:86vh;overflow-y:auto;
+    padding:10px 18px calc(20px + var(--safe-b));transform:translateY(100%);transition:transform .25s ease}
+  .sheet.open{transform:none}
+  .sheet .grab{width:40px;height:5px;border-radius:3px;background:rgba(255,255,255,.25);margin:0 auto 14px}
+  .sheet h2{margin:0 0 14px;font-size:19px}
+  .spec{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+  .spec div{background:#202026;border-radius:12px;padding:10px;text-align:center}
+  .spec b{display:block;font-size:17px}
+  .spec span{font-size:12px;color:var(--muted)}
+  .feat{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+  .sheet .btns{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px}
+  .wa-btn{background:#25d366}
+  .toast{position:fixed;left:50%;bottom:calc(var(--nav-h) + var(--safe-b) + 16px);transform:translateX(-50%);background:#fff;color:#000;
+    padding:10px 16px;border-radius:10px;font-weight:600;font-size:14px;z-index:40;opacity:0;transition:opacity .2s;pointer-events:none;white-space:nowrap}
+  .toast.show{opacity:1}
+
+  @media (min-width:700px){
+    .screen,nav,.topbar,.sheet{max-width:460px;margin-inline:auto}
+    .screen,nav{left:0;right:0}
+    body{background:#0a0a0a}
+  }
+</style>
+</head>
+<body>
+
+<!-- ============ FEED ============ -->
+<section id="scr-feed" class="screen">
+  <div class="topbar">
+    <div class="logo">דירה<b>טוק</b></div>
+    <button class="filter-btn" id="openFilter">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M7 12h10M10 18h4"/></svg>
+      סינון <span class="dot hidden" id="filterDot"></span>
+    </button>
+  </div>
+  <div id="feed"></div>
+</section>
+
+<!-- ============ UPLOAD ============ -->
+<section id="scr-upload" class="screen hidden">
+  <div class="page">
+    <h1>העלאת סרטון דירה</h1>
+    <div class="rules">
+      <b>רק דירות 🏠</b> — כאן מעלים אך ורק סרטוני סיור בנכס: חדרים, מטבח, מרפסת, נוף.<br>
+      אורך מקסימלי: <b>3 דקות</b> · מומלץ לצלם לאורך (9:16).
+    </div>
+
+    <input type="file" id="fileIn" accept="video/*" class="hidden">
+    <div class="drop" id="drop">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 10l5-3v10l-5-3"/><rect x="2" y="6" width="13" height="12" rx="2"/></svg>
+      <b>בחרו סרטון של הדירה</b>
+      צלמו עכשיו או בחרו מהגלריה
+    </div>
+    <div id="previewWrap" class="hidden">
+      <div class="preview"><video id="preview" playsinline muted loop autoplay></video>
+        <button class="x" id="clearVid" aria-label="הסר סרטון"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      </div>
+    </div>
+    <div class="err" id="vidErr"></div>
+
+    <form id="upForm" autocomplete="off">
+      <div class="field"><label>סוג עסקה</label>
+        <div class="seg" id="dealSeg"><button type="button" data-v="rent" class="on">להשכרה</button><button type="button" data-v="sale">למכירה</button></div>
+      </div>
+      <div class="row">
+        <div class="field"><label>עיר *</label><input name="city" required list="cities" placeholder="תל אביב"></div>
+        <div class="field"><label>שכונה / רחוב</label><input name="area" placeholder="פלורנטין"></div>
+      </div>
+      <div class="field"><label id="priceLbl">מחיר לחודש (₪) *</label><input name="price" required type="number" inputmode="numeric" min="1" placeholder="6500"></div>
+      <div class="row3">
+        <div class="field"><label>חדרים *</label><input name="rooms" required type="number" inputmode="decimal" step="0.5" min="1" max="20" placeholder="3"></div>
+        <div class="field"><label>מ"ר</label><input name="sqm" type="number" inputmode="numeric" min="1" placeholder="75"></div>
+        <div class="field"><label>קומה</label><input name="floor" type="number" inputmode="numeric" placeholder="2"></div>
+      </div>
+      <div class="field"><label>מאפיינים</label>
+        <div class="chips" id="featChips"></div>
+      </div>
+      <div class="field"><label>תיאור</label><textarea name="desc" maxlength="400" placeholder="מה מיוחד בדירה? כניסה, שכנים, תחבורה..."></textarea></div>
+      <div class="row">
+        <div class="field"><label>שם *</label><input name="name" required placeholder="דני"></div>
+        <div class="field"><label>טלפון (וואטסאפ) *</label><input name="phone" required type="tel" inputmode="tel" placeholder="050-0000000" pattern="[0-9\-+ ]{9,15}"></div>
+      </div>
+      <label class="check"><input type="checkbox" id="confirm" required> אני מאשר/ת שהסרטון מציג דירה אמיתית שמוצעת להשכרה או למכירה, ושיש לי זכות לפרסם אותו.</label>
+      <div class="err" id="formErr"></div>
+      <button class="btn" style="width:100%" id="publish" type="submit">פרסום הדירה</button>
+    </form>
+    <datalist id="cities"></datalist>
+  </div>
+</section>
+
+<!-- ============ SAVED ============ -->
+<section id="scr-saved" class="screen hidden"><div class="page"><h1>דירות ששמרתי</h1><div id="savedGrid"></div></div></section>
+
+<!-- ============ MINE ============ -->
+<section id="scr-mine" class="screen hidden"><div class="page">
+  <div class="profile-head"><div class="avatar" id="avatar">🏠</div>
+    <div><div style="font-weight:800;font-size:18px" id="myName">הדירות שלי</div>
+      <div class="stats"><div><b id="stCount">0</b>מודעות</div><div><b id="stLikes">0</b>לייקים</div></div></div></div>
+  <div id="mineGrid"></div>
+</div></section>
+
+<!-- ============ NAV ============ -->
+<nav>
+  <button data-go="feed" class="active"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3l9 8h-3v9h-5v-6h-2v6H6v-9H3z"/></svg>בית</button>
+  <button data-go="saved"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 3h12a1 1 0 011 1v17l-7-4-7 4V4a1 1 0 011-1z"/></svg>שמורים</button>
+  <button data-go="upload" class="plus"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span></button>
+  <button data-go="mine"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7z"/></svg>הדירות שלי</button>
+</nav>
+
+<!-- ============ SHEETS ============ -->
+<div class="backdrop" id="backdrop"></div>
+<div class="sheet" id="detailSheet"><div class="grab"></div><div id="detailBody"></div></div>
+<div class="sheet" id="filterSheet"><div class="grab"></div>
+  <h2>סינון דירות</h2>
+  <div class="field"><label>סוג עסקה</label>
+    <div class="seg" id="fDeal"><button data-v="" class="on">הכל</button><button data-v="rent">השכרה</button><button data-v="sale">מכירה</button></div></div>
+  <div class="field"><label>עיר</label><input id="fCity" list="cities" placeholder="כל הערים"></div>
+  <div class="row">
+    <div class="field"><label>מחיר עד (₪)</label><input id="fMax" type="number" inputmode="numeric" placeholder="ללא הגבלה"></div>
+    <div class="field"><label>חדרים מ־</label><select id="fRooms"><option value="">הכל</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select></div>
+  </div>
+  <div class="btns"><button class="btn ghost" id="fReset">איפוס</button><button class="btn" id="fApply">הצג דירות</button></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+(() => {
+'use strict';
+/* =====================================================================
+   Storage: IndexedDB (video blobs + listing metadata stay on the device).
+   Swap `store` for a real backend (Supabase / Firebase) to share between users.
+   ===================================================================== */
+const DB_NAME = 'diratok', DB_VER = 1;
+const MAX_SECONDS = 180, MAX_MB = 300;
+const FEATURES = ['מרפסת','חניה','ממ"ד','מעלית','מזגן','מרוהטת','חיות מחמד','משופצת','מחסן','נגישות'];
+const CITIES = ['תל אביב','ירושלים','חיפה','באר שבע','רמת גן','גבעתיים','הרצליה','רעננה','כפר סבא','פתח תקווה','ראשון לציון','חולון','בת ים','נתניה','אשדוד','רחובות','מודיעין','הוד השרון','חדרה','אילת'];
+
+function openDB(){
+  return new Promise((res,rej)=>{
+    const r = indexedDB.open(DB_NAME, DB_VER);
+    r.onupgradeneeded = () => {
+      const db = r.result;
+      if(!db.objectStoreNames.contains('listings')) db.createObjectStore('listings',{keyPath:'id'});
+      if(!db.objectStoreNames.contains('videos')) db.createObjectStore('videos');
+    };
+    r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
+  });
+}
+const dbp = openDB();
+async function tx(stores, mode, fn){
+  const db = await dbp;
+  return new Promise((res,rej)=>{
+    const t = db.transaction(stores, mode); let out;
+    Promise.resolve(fn(t)).then(v=>out=v);
+    t.oncomplete = () => res(out); t.onerror = () => rej(t.error); t.onabort = () => rej(t.error);
+  });
+}
+const reqP = r => new Promise((res,rej)=>{ r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); });
+const store = {
+  all: () => tx(['listings'],'readonly', t => reqP(t.objectStore('listings').getAll())),
+  put: (l, blob) => tx(['listings','videos'],'readwrite', t => { t.objectStore('listings').put(l); if(blob) t.objectStore('videos').put(blob, l.id); }),
+  update: l => tx(['listings'],'readwrite', t => { t.objectStore('listings').put(l); }),
+  video: id => tx(['videos'],'readonly', t => reqP(t.objectStore('videos').get(id))),
+  remove: id => tx(['listings','videos'],'readwrite', t => { t.objectStore('listings').delete(id); t.objectStore('videos').delete(id); }),
+};
+
+/* Per-device state */
+const LS = {
+  get(k,d){ try{ const v = localStorage.getItem('dt_'+k); return v==null?d:JSON.parse(v);}catch{ return d; } },
+  set(k,v){ try{ localStorage.setItem('dt_'+k, JSON.stringify(v)); }catch{} }
+};
+let liked = new Set(LS.get('liked',[])), saved = new Set(LS.get('saved',[])), mine = new Set(LS.get('mine',[]));
+let filters = LS.get('filters',{deal:'',city:'',max:'',rooms:''});
+let muted = true;
+let listings = [];
+
+/* ---------- helpers ---------- */
+const $ = s => document.querySelector(s);
+const esc = s => String(s??'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt = n => Number(n).toLocaleString('he-IL');
+const urlCache = new Map();
+async function videoURL(id){
+  if(urlCache.has(id)) return urlCache.get(id);
+  const b = await store.video(id); if(!b) return '';
+  const u = URL.createObjectURL(b); urlCache.set(id,u); return u;
+}
+let toastT;
+function toast(msg){ const t=$('#toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),1800); }
+const ICON = {
+  heart:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7.5-4.6-9.6-9.2C.9 8.5 3 4.5 6.8 4.5c2.2 0 3.6 1.2 5.2 3 1.6-1.8 3-3 5.2-3 3.8 0 5.9 4 4.4 7.3C19.5 16.4 12 21 12 21z"/></svg>',
+  save:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 3h12a1 1 0 011 1v17l-7-4-7 4V4a1 1 0 011-1z"/></svg>',
+  info:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5" stroke-linecap="round"/></svg>',
+  share:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M14 4l8 7.5-8 7.5v-4.5c-6 0-9 2-12 5.5 1-6 4-10.5 12-11.5z"/></svg>',
+  wa:'<svg viewBox="0 0 24 24" fill="#fff"><path d="M12 2a10 10 0 00-8.6 15.1L2 22l5-1.3A10 10 0 1012 2zm5.3 14.1c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .2-3.3-.7-2.8-1.1-4.6-4-4.7-4.2-.1-.2-1.1-1.5-1.1-2.9s.7-2 1-2.3c.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 2c.1.2.1.4 0 .5l-.3.5-.4.4c-.1.1-.3.3-.1.6.1.3.6 1.1 1.4 1.8 1 .9 1.8 1.1 2 1.3.3.1.4.1.6-.1l.8-1c.2-.3.4-.2.6-.1l1.9.9c.3.1.4.2.5.3.1.2.1.7-.1 1.4z"/></svg>',
+  vol:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 9v6h4l5 4V5L8 9zM16 8a5 5 0 010 8M18.5 5.5a8.5 8.5 0 010 13" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M4 9v6h4l5 4V5L8 9z"/></svg>',
+  mute:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16 9l5 6M21 9l-5 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+  play:'<svg viewBox="0 0 24 24" fill="#fff"><path d="M8 5v14l11-7z"/></svg>',
+  trash:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>',
+  house:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M3 11l9-8 9 8M5 9.5V21h14V9.5M10 21v-6h4v6"/></svg>',
+};
+const dealLabel = l => l.deal==='sale' ? 'למכירה' : 'להשכרה';
+const priceHTML = l => `₪${fmt(l.price)}${l.deal==='rent'?' <small>/ חודש</small>':''}`;
+const waLink = (l, txt) => {
+  let p = String(l.phone).replace(/[^\d+]/g,''); if(p.startsWith('0')) p = '972'+p.slice(1); p = p.replace('+','');
+  return `https://wa.me/${p}?text=${encodeURIComponent(txt || `היי ${l.name}, ראיתי בדירהטוק את הדירה ב${l.city} (${l.rooms} חד׳, ₪${fmt(l.price)}). היא עדיין רלוונטית?`)}`;
+};
+
+/* ---------- navigation ---------- */
+let current = 'feed';
+function go(name){
+  current = name;
+  document.querySelectorAll('.screen').forEach(s=>s.classList.add('hidden'));
+  $('#scr-'+name).classList.remove('hidden');
+  document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('active', b.dataset.go===name));
+  if(name!=='feed') pauseAll(); else playVisible();
+  if(name==='saved') renderGrid('#savedGrid', listings.filter(l=>saved.has(l.id)), false);
+  if(name==='mine') renderMine();
+  if(name==='upload') prefillContact();
+}
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>go(b.dataset.go));
+
+/* ---------- feed ---------- */
+function matches(l){
+  if(filters.deal && l.deal!==filters.deal) return false;
+  if(filters.city && !l.city.includes(filters.city.trim())) return false;
+  if(filters.max && Number(l.price) > Number(filters.max)) return false;
+  if(filters.rooms && Number(l.rooms) < Number(filters.rooms)) return false;
+  return true;
+}
+const io = new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    const v = e.target.querySelector('video'); if(!v) return;
+    if(e.isIntersecting && e.intersectionRatio>.6 && current==='feed'){
+      ensureSrc(e.target).then(()=>{ v.muted = muted; v.play().catch(()=>{}); });
+      // preload next card
+      const n = e.target.nextElementSibling; if(n) ensureSrc(n);
+    } else { v.pause(); }
+  });
+},{threshold:[0,.6,1]});
+async function ensureSrc(card){
+  const v = card.querySelector('video'); if(!v || v.src) return;
+  v.src = await videoURL(card.dataset.id);
+}
+function pauseAll(){ document.querySelectorAll('#feed video').forEach(v=>v.pause()); }
+function playVisible(){
+  const feed = $('#feed'); const idx = Math.round(feed.scrollTop / (feed.clientHeight||1));
+  const card = feed.children[idx]; if(!card) return;
+  const v = card.querySelector('video'); if(v) ensureSrc(card).then(()=>{ v.muted=muted; v.play().catch(()=>{}); });
+}
+
+function renderFeed(){
+  const feed = $('#feed'); io.disconnect(); feed.innerHTML='';
+  const items = listings.filter(matches).sort((a,b)=>b.created-a.created);
+  const active = filters.deal||filters.city||filters.max||filters.rooms;
+  $('#filterDot').classList.toggle('hidden', !active);
+  if(!items.length){
+    feed.innerHTML = `<div class="empty">${ICON.house}
+      <h2>${active ? 'לא נמצאו דירות' : 'עוד אין כאן דירות'}</h2>
+      <p>${active ? 'נסו להרחיב את הסינון — מחיר, עיר או מספר חדרים.' : 'היו הראשונים להעלות סרטון סיור בדירה. 30 שניות של וידאו שוות יותר מ־30 תמונות.'}</p>
+      ${active ? '<button class="btn ghost" id="emptyReset">איפוס סינון</button>' : '<button class="btn" id="emptyUp">העלאת דירה</button>'}</div>`;
+    $('#emptyUp')?.addEventListener('click',()=>go('upload'));
+    $('#emptyReset')?.addEventListener('click',()=>{ filters={deal:'',city:'',max:'',rooms:''}; LS.set('filters',filters); syncFilterUI(); renderFeed(); });
+    return;
+  }
+  for(const l of items){
+    const c = document.createElement('article'); c.className='card'; c.dataset.id=l.id;
+    const feats = (l.features||[]).slice(0,3).map(f=>`<span class="tag">${esc(f)}</span>`).join('');
+    c.innerHTML = `
+      <video playsinline loop muted preload="metadata"></video>
+      <div class="shade"></div>
+      <svg class="bigheart" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7.5-4.6-9.6-9.2C.9 8.5 3 4.5 6.8 4.5c2.2 0 3.6 1.2 5.2 3 1.6-1.8 3-3 5.2-3 3.8 0 5.9 4 4.4 7.3C19.5 16.4 12 21 12 21z"/></svg>
+      <div class="paused-ind hidden">${ICON.play}</div>
+      <button class="mute" aria-label="קול">${muted?ICON.mute:ICON.vol}</button>
+      <div class="info">
+        <div class="price">${priceHTML(l)}</div>
+        <div class="tags"><span class="tag deal ${l.deal}">${dealLabel(l)}</span><span class="tag">${esc(l.rooms)} חד׳</span>${l.sqm?`<span class="tag">${esc(l.sqm)} מ"ר</span>`:''}${feats}</div>
+        <div class="loc">📍 ${esc(l.city)}${l.area?' · '+esc(l.area):''}</div>
+        ${l.desc?`<div class="desc">${esc(l.desc)}</div>`:''}
+      </div>
+      <div class="actions">
+        <button class="act like ${liked.has(l.id)?'on':''}"><span class="ic">${ICON.heart}</span><span class="n">${fmt(l.likes||0)}</span></button>
+        <button class="act saved ${saved.has(l.id)?'on':''}"><span class="ic">${ICON.save}</span>שמירה</button>
+        <button class="act more"><span class="ic">${ICON.info}</span>פרטים</button>
+        <button class="act share"><span class="ic">${ICON.share}</span>שיתוף</button>
+        <a class="act wa" href="${waLink(l)}" target="_blank" rel="noopener"><span class="ic">${ICON.wa}</span>וואטסאפ</a>
+      </div>
+      <div class="progress"><i></i></div>`;
+    wireCard(c,l);
+    feed.appendChild(c); io.observe(c);
+  }
+}
+
+function wireCard(c,l){
+  const v = c.querySelector('video'), bar = c.querySelector('.progress i'), pi = c.querySelector('.paused-ind');
+  v.addEventListener('timeupdate',()=>{ if(v.duration) bar.style.width = (v.currentTime/v.duration*100)+'%'; });
+  v.addEventListener('play',()=>pi.classList.add('hidden'));
+  let lastTap = 0, tapT;
+  c.addEventListener('click', e=>{
+    if(e.target.closest('.actions,.mute,.info')) return;
+    const now = Date.now();
+    if(now - lastTap < 280){ clearTimeout(tapT); lastTap=0; doLike(c,l,true); return; }
+    lastTap = now;
+    tapT = setTimeout(()=>{ if(v.paused){ v.play().catch(()=>{}); } else { v.pause(); pi.classList.remove('hidden'); } }, 280);
+  });
+  c.querySelector('.mute').onclick = ()=>{
+    muted = !muted;
+    document.querySelectorAll('#feed .mute').forEach(b=>b.innerHTML = muted?ICON.mute:ICON.vol);
+    document.querySelectorAll('#feed video').forEach(x=>x.muted=muted);
+  };
+  c.querySelector('.like').onclick = ()=>doLike(c,l,false);
+  c.querySelector('.saved').onclick = e=>{
+    const on = !saved.has(l.id); on?saved.add(l.id):saved.delete(l.id); LS.set('saved',[...saved]);
+    e.currentTarget.classList.toggle('on',on); toast(on?'נשמר לרשימה ⭐':'הוסר מהשמורים');
+  };
+  c.querySelector('.more').onclick = ()=>openDetails(l);
+  c.querySelector('.info').onclick = ()=>openDetails(l);
+  c.querySelector('.share').onclick = async ()=>{
+    const text = `${dealLabel(l)}: ${l.rooms} חד׳ ב${l.city}${l.area?', '+l.area:''} — ₪${fmt(l.price)}`;
+    try{ if(navigator.share){ await navigator.share({title:'דירהטוק', text}); return; } }catch{ return; }
+    try{ await navigator.clipboard.writeText(text); toast('הפרטים הועתקו'); }catch{ toast(text); }
+  };
+}
+async function doLike(c,l,fromDouble){
+  const btn = c.querySelector('.like');
+  if(fromDouble){ const h=c.querySelector('.bigheart'); h.classList.remove('pop'); void h.offsetWidth; h.classList.add('pop'); if(liked.has(l.id)) return; }
+  const on = !liked.has(l.id);
+  on ? liked.add(l.id) : liked.delete(l.id); LS.set('liked',[...liked]);
+  l.likes = Math.max(0,(l.likes||0) + (on?1:-1)); await store.update(l);
+  btn.classList.toggle('on',on); btn.querySelector('.n').textContent = fmt(l.likes);
+}
+
+/* ---------- details sheet ---------- */
+function openSheet(id){ $('#backdrop').classList.add('open'); $(id).classList.add('open'); }
+function closeSheets(){ $('#backdrop').classList.remove('open'); document.querySelectorAll('.sheet').forEach(s=>s.classList.remove('open')); }
+$('#backdrop').onclick = closeSheets;
+function openDetails(l){
+  $('#detailBody').innerHTML = `
+    <h2>${esc(l.rooms)} חדרים ${dealLabel(l)} · ${esc(l.city)}</h2>
+    <div class="price" style="margin-bottom:12px">${priceHTML(l)}</div>
+    <div class="spec"><div><b>${esc(l.rooms)}</b><span>חדרים</span></div><div><b>${l.sqm?esc(l.sqm):'—'}</b><span>מ"ר</span></div><div><b>${l.floor!==''&&l.floor!=null?esc(l.floor):'—'}</b><span>קומה</span></div></div>
+    ${l.sqm&&l.deal==='sale'?`<p style="color:var(--muted);margin:0 0 12px;font-size:14px">₪${fmt(Math.round(l.price/l.sqm))} למ"ר</p>`:''}
+    <div class="loc" style="margin-bottom:10px">📍 ${esc(l.city)}${l.area?' · '+esc(l.area):''}</div>
+    ${(l.features||[]).length?`<div class="feat">${l.features.map(f=>`<span class="chip">${esc(f)}</span>`).join('')}</div>`:''}
+    ${l.desc?`<p style="line-height:1.6;white-space:pre-wrap;margin:0 0 14px">${esc(l.desc)}</p>`:''}
+    <p style="color:var(--muted);font-size:13px;margin:0 0 6px">מפרסם/ת: ${esc(l.name)} · פורסם ${new Date(l.created).toLocaleDateString('he-IL')}</p>
+    <div class="btns">
+      <a class="btn wa-btn" href="${waLink(l)}" target="_blank" rel="noopener">וואטסאפ</a>
+      <a class="btn ghost" href="tel:${esc(String(l.phone).replace(/[^\d+]/g,''))}">חיוג</a>
+    </div>`;
+  openSheet('#detailSheet');
+}
+
+/* ---------- filters ---------- */
+function segInit(el, val, cb){
+  el.querySelectorAll('button').forEach(b=>{
+    b.classList.toggle('on', b.dataset.v===val);
+    b.onclick = ()=>{ el.querySelectorAll('button').forEach(x=>x.classList.remove('on')); b.classList.add('on'); cb&&cb(b.dataset.v); };
+  });
+}
+function syncFilterUI(){
+  segInit($('#fDeal'), filters.deal);
+  $('#fCity').value = filters.city; $('#fMax').value = filters.max; $('#fRooms').value = filters.rooms;
+}
+$('#openFilter').onclick = ()=>{ syncFilterUI(); openSheet('#filterSheet'); };
+$('#fApply').onclick = ()=>{
+  filters = { deal:$('#fDeal .on')?.dataset.v||'', city:$('#fCity').value.trim(), max:$('#fMax').value, rooms:$('#fRooms').value };
+  LS.set('filters',filters); closeSheets(); renderFeed(); $('#feed').scrollTop=0;
+};
+$('#fReset').onclick = ()=>{ filters={deal:'',city:'',max:'',rooms:''}; syncFilterUI(); };
+
+/* ---------- grids (saved / mine) ---------- */
+function renderGrid(sel, items, deletable){
+  const el = $(sel);
+  if(!items.length){
+    el.innerHTML = `<div class="empty" style="height:auto;padding-top:60px">${ICON.house}<p>${deletable?'עוד לא העליתם דירות.':'עוד לא שמרתם דירות. לחצו על ⭐ בפיד כדי לשמור.'}</p>
+      ${deletable?'<button class="btn" data-up>העלאת דירה</button>':''}</div>`;
+    el.querySelector('[data-up]')?.addEventListener('click',()=>go('upload'));
+    return;
+  }
+  el.innerHTML = '<div class="grid"></div>'; const g = el.firstChild;
+  for(const l of items){
+    const t = document.createElement('div'); t.className='thumb';
+    t.innerHTML = `<video muted playsinline preload="metadata"></video><div class="tp">₪${fmt(l.price)}</div>${deletable?`<button class="del" aria-label="מחיקה">${ICON.trash}</button>`:''}`;
+    videoURL(l.id).then(u=>{ if(u) t.querySelector('video').src = u+'#t=0.5'; });
+    t.onclick = e=>{
+      if(e.target.closest('.del')){
+        if(confirm('למחוק את המודעה?')){ store.remove(l.id).then(async()=>{ mine.delete(l.id); LS.set('mine',[...mine]); await load(); renderMine(); toast('המודעה נמחקה'); }); }
+        return;
+      }
+      openDetails(l);
+    };
+    g.appendChild(t);
+  }
+}
+function renderMine(){
+  const my = listings.filter(l=>mine.has(l.id)).sort((a,b)=>b.created-a.created);
+  const me = LS.get('me',{});
+  $('#myName').textContent = me.name ? me.name : 'הדירות שלי';
+  $('#avatar').textContent = me.name ? me.name.trim()[0] : '🏠';
+  $('#stCount').textContent = my.length;
+  $('#stLikes').textContent = fmt(my.reduce((s,l)=>s+(l.likes||0),0));
+  renderGrid('#mineGrid', my, true);
+}
+
+/* ---------- upload ---------- */
+let pickedFile = null, pickedDur = 0, deal = 'rent';
+const featSel = new Set();
+$('#cities').innerHTML = CITIES.map(c=>`<option value="${esc(c)}">`).join('');
+$('#featChips').innerHTML = FEATURES.map(f=>`<button type="button" class="chip" data-f="${esc(f)}">${esc(f)}</button>`).join('');
+$('#featChips').onclick = e=>{ const b=e.target.closest('.chip'); if(!b) return; const f=b.dataset.f; featSel.has(f)?featSel.delete(f):featSel.add(f); b.classList.toggle('on'); };
+segInit($('#dealSeg'), 'rent', v=>{ deal=v; $('#priceLbl').textContent = v==='rent'?'מחיר לחודש (₪) *':'מחיר מבוקש (₪) *'; });
+$('#drop').onclick = ()=>$('#fileIn').click();
+$('#fileIn').onchange = e=>pickVideo(e.target.files[0]);
+$('#clearVid').onclick = clearVideo;
+function prefillContact(){ const me = LS.get('me',{}); const f=$('#upForm'); if(me.name && !f.name.value) f.name.value=me.name; if(me.phone && !f.phone.value) f.phone.value=me.phone; }
+function clearVideo(){
+  pickedFile=null; pickedDur=0; const p=$('#preview'); if(p.src) URL.revokeObjectURL(p.src); p.removeAttribute('src'); p.load();
+  $('#previewWrap').classList.add('hidden'); $('#drop').classList.remove('hidden'); $('#fileIn').value='';
+}
+function pickVideo(file){
+  $('#vidErr').textContent='';
+  if(!file) return;
+  if(!file.type.startsWith('video/')){ $('#vidErr').textContent='אפשר להעלות רק קובצי וידאו.'; return; }
+  if(file.size > MAX_MB*1024*1024){ $('#vidErr').textContent=`הקובץ גדול מדי (מקסימום ${MAX_MB}MB).`; return; }
+  const url = URL.createObjectURL(file); const p = $('#preview');
+  p.onloadedmetadata = ()=>{
+    pickedDur = p.duration;
+    if(!isFinite(pickedDur) || pickedDur <= 0){ pickedDur = 0; }
+    if(pickedDur > MAX_SECONDS){ $('#vidErr').textContent=`הסרטון ארוך מדי (${Math.round(pickedDur)} שניות). מקסימום 3 דקות.`; clearVideo(); return; }
+    if(pickedDur && pickedDur < 3){ $('#vidErr').textContent='הסרטון קצר מדי — הראו את הדירה לפחות כמה שניות.'; clearVideo(); return; }
+    pickedFile = file;
+    $('#drop').classList.add('hidden'); $('#previewWrap').classList.remove('hidden');
+  };
+  p.onerror = ()=>{ $('#vidErr').textContent='לא הצלחנו לקרוא את הסרטון. נסו קובץ MP4 / MOV.'; clearVideo(); };
+  p.src = url;
+}
+$('#upForm').onsubmit = async e=>{
+  e.preventDefault(); $('#formErr').textContent='';
+  if(!pickedFile){ $('#vidErr').textContent='צריך לבחור סרטון של הדירה.'; $('#drop').scrollIntoView({behavior:'smooth',block:'center'}); return; }
+  const f = e.target, fd = Object.fromEntries(new FormData(f));
+  if(!$('#confirm').checked){ $('#formErr').textContent='יש לאשר שהסרטון מציג דירה.'; return; }
+  const btn = $('#publish'); btn.disabled = true; btn.textContent = 'מפרסם...';
+  const l = {
+    id: (crypto.randomUUID ? crypto.randomUUID() : Date.now()+'-'+Math.random().toString(36).slice(2)),
+    deal, city: fd.city.trim(), area: (fd.area||'').trim(), price: Number(fd.price), rooms: Number(fd.rooms),
+    sqm: fd.sqm ? Number(fd.sqm) : '', floor: fd.floor===''?'':Number(fd.floor), features:[...featSel],
+    desc: (fd.desc||'').trim(), name: fd.name.trim(), phone: fd.phone.trim(),
+    duration: Math.round(pickedDur), likes: 0, created: Date.now(),
+  };
+  try{
+    await store.put(l, pickedFile);
+    mine.add(l.id); LS.set('mine',[...mine]); LS.set('me',{name:l.name, phone:l.phone});
+    f.reset(); featSel.clear(); document.querySelectorAll('#featChips .chip').forEach(c=>c.classList.remove('on'));
+    deal='rent'; segInit($('#dealSeg'),'rent', v=>{ deal=v; $('#priceLbl').textContent = v==='rent'?'מחיר לחודש (₪) *':'מחיר מבוקש (₪) *'; });
+    $('#priceLbl').textContent='מחיר לחודש (₪) *'; clearVideo();
+    await load(); go('feed'); $('#feed').scrollTop = 0; toast('הדירה פורסמה! 🎉');
+  }catch(err){
+    $('#formErr').textContent = 'הפרסום נכשל — ייתכן שאין מספיק מקום באחסון. ' + (err?.message||'');
+  }finally{ btn.disabled=false; btn.textContent='פרסום הדירה'; }
+};
+
+/* ---------- boot ---------- */
+async function load(){ listings = await store.all(); renderFeed(); }
+document.addEventListener('visibilitychange',()=>{ if(document.hidden) pauseAll(); else if(current==='feed') playVisible(); });
+load();
+})();
+</script>
+</body>
+</html>
