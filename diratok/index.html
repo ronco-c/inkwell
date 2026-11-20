@@ -3,595 +3,781 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#000000">
+<meta name="theme-color" content="#0d0c0b">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="manifest" href="manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <title>דירהטוק</title>
 <style>
   :root{
-    --bg:#000; --fg:#fff; --muted:rgba(255,255,255,.7);
-    --accent:#ff3d6e; --accent2:#22d3c5; --sheet:#16161a; --line:rgba(255,255,255,.12);
-    --nav-h:64px; --safe-b:env(safe-area-inset-bottom,0px); --safe-t:env(safe-area-inset-top,0px);
+    --bg:#0d0c0b; --surface:#171513; --surface-2:#211e1b; --line:rgba(245,239,230,.10); --line-2:rgba(245,239,230,.18);
+    --ink:#f6f1ea; --muted:rgba(246,241,234,.62); --faint:rgba(246,241,234,.38);
+    --brand:#ff6b3d; --brand-soft:rgba(255,107,61,.16); --brand-ink:#fff;
+    --gold:#ffc65c; --ok:#2fd27a; --danger:#ff5a6a;
+    --r-sm:10px; --r:14px; --r-lg:22px;
+    --nav-h:62px; --safe-b:env(safe-area-inset-bottom,0px); --safe-t:env(safe-area-inset-top,0px);
+    --ease:cubic-bezier(.2,.8,.2,1);
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-  html,body{margin:0;height:100%;background:var(--bg);color:var(--fg);
-    font-family:system-ui,-apple-system,"Segoe UI",Rubik,Arial,sans-serif;overscroll-behavior:none}
-  button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+  html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);overscroll-behavior:none;
+    font-family:Heebo,system-ui,-apple-system,"Segoe UI",Arial,sans-serif;-webkit-font-smoothing:antialiased}
+  button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;padding:0}
   a{color:inherit;text-decoration:none}
-  input,select,textarea{font:inherit}
+  input,select,textarea{font:inherit;color:inherit}
   .hidden{display:none!important}
+  .num{font-variant-numeric:tabular-nums}
+  svg{display:block}
 
-  /* ---------- Screens ---------- */
-  .screen{position:fixed;inset:0 0 calc(var(--nav-h) + var(--safe-b)) 0;overflow:hidden}
+  .app{position:fixed;inset:0;overflow:hidden}
+  .screen{position:absolute;inset:0 0 calc(var(--nav-h) + var(--safe-b)) 0;overflow:hidden}
 
-  /* ---------- Feed ---------- */
+  /* ================= FEED ================= */
   #feed{height:100%;overflow-y:scroll;scroll-snap-type:y mandatory;scrollbar-width:none}
   #feed::-webkit-scrollbar{display:none}
-  .card{position:relative;height:100%;scroll-snap-align:start;scroll-snap-stop:always;background:#111;overflow:hidden}
-  .card video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#000}
+  .card{position:relative;height:100%;scroll-snap-align:start;scroll-snap-stop:always;background:#000;overflow:hidden}
+  .card video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
   .card .shade{position:absolute;inset:0;pointer-events:none;
-    background:linear-gradient(to top,rgba(0,0,0,.75) 0%,rgba(0,0,0,0) 45%),
-               linear-gradient(to bottom,rgba(0,0,0,.4) 0%,rgba(0,0,0,0) 18%)}
-  .info{position:absolute;inset-inline-start:14px;inset-inline-end:84px;bottom:18px;text-shadow:0 1px 3px rgba(0,0,0,.6)}
-  .price{font-size:26px;font-weight:800;letter-spacing:-.5px}
-  .price small{font-size:14px;font-weight:600;opacity:.85}
-  .tags{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}
-  .tag{font-size:13px;padding:3px 9px;border-radius:999px;background:rgba(255,255,255,.18);backdrop-filter:blur(6px)}
-  .tag.deal{background:var(--accent);font-weight:700}
-  .tag.deal.sale{background:#6d5cff}
-  .loc{font-weight:700;font-size:16px}
-  .desc{font-size:14px;color:var(--muted);margin-top:4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-  .actions{position:absolute;inset-inline-end:10px;bottom:22px;display:flex;flex-direction:column;gap:18px;align-items:center}
-  .act{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:12px;font-weight:600;text-shadow:0 1px 3px rgba(0,0,0,.6)}
-  .act .ic{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;background:rgba(0,0,0,.28);backdrop-filter:blur(6px)}
-  .act svg{width:28px;height:28px}
-  .act.on .ic{color:var(--accent)}
-  .act.saved.on .ic{color:#ffc93d}
-  .act.wa .ic{background:#25d366}
-  .bigheart{position:absolute;left:50%;top:50%;width:110px;height:110px;margin:-55px 0 0 -55px;color:var(--accent);
-    pointer-events:none;opacity:0;transform:scale(.4)}
-  .bigheart.pop{animation:pop .7s ease-out}
-  @keyframes pop{0%{opacity:0;transform:scale(.4)}25%{opacity:1;transform:scale(1.1)}60%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(1.3)}}
-  .mute{position:absolute;top:calc(14px + var(--safe-t));inset-inline-start:14px;width:38px;height:38px;border-radius:50%;
-    display:grid;place-items:center;background:rgba(0,0,0,.35)}
-  .mute svg{width:20px;height:20px}
-  .paused-ind{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:72px;height:72px;opacity:.75;pointer-events:none}
-  .progress{position:absolute;left:0;right:0;bottom:0;height:3px;background:rgba(255,255,255,.15)}
-  .progress i{display:block;height:100%;width:0;background:#fff}
+    background:linear-gradient(to top,rgba(8,7,6,.92) 0%,rgba(8,7,6,.55) 26%,rgba(8,7,6,0) 52%),
+               linear-gradient(to bottom,rgba(8,7,6,.55) 0%,rgba(8,7,6,0) 16%)}
 
-  .topbar{position:fixed;top:0;left:0;right:0;z-index:5;padding:calc(10px + var(--safe-t)) 14px 10px;display:flex;
-    justify-content:center;align-items:center;gap:8px;pointer-events:none}
-  .topbar .logo{font-weight:900;font-size:20px;letter-spacing:-.5px;pointer-events:auto}
-  .topbar .logo b{color:var(--accent)}
-  .topbar .filter-btn{position:absolute;inset-inline-end:14px;top:calc(8px + var(--safe-t));pointer-events:auto;
-    display:flex;align-items:center;gap:6px;padding:7px 12px;border-radius:999px;background:rgba(0,0,0,.4);backdrop-filter:blur(8px);font-size:14px;font-weight:600}
-  .topbar .filter-btn svg{width:18px;height:18px}
-  .topbar .filter-btn .dot{width:8px;height:8px;border-radius:50%;background:var(--accent)}
+  .topbar{position:absolute;top:0;left:0;right:0;z-index:6;padding:calc(8px + var(--safe-t)) 12px 8px;
+    display:grid;grid-template-columns:44px 1fr 44px;align-items:center;pointer-events:none}
+  .topbar>*{pointer-events:auto}
+  .tabs{display:flex;justify-content:center;gap:20px}
+  .tabs button{font-size:16px;font-weight:600;color:var(--muted);padding:6px 0;position:relative;text-shadow:0 1px 4px rgba(0,0,0,.5)}
+  .tabs button.on{color:var(--ink);font-weight:800}
+  .tabs button.on::after{content:"";position:absolute;bottom:0;left:50%;width:20px;height:3px;margin-left:-10px;border-radius:2px;background:var(--ink)}
+  .iconbtn{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;position:relative;background:rgba(0,0,0,.28);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+  .iconbtn svg{width:20px;height:20px}
+  .iconbtn .dot{position:absolute;top:7px;right:7px;width:8px;height:8px;border-radius:50%;background:var(--brand);box-shadow:0 0 0 2px #000}
 
-  .empty{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:30px;gap:14px}
-  .empty svg{width:72px;height:72px;opacity:.85}
-  .empty h2{margin:0;font-size:22px}
-  .empty p{margin:0;color:var(--muted);max-width:300px;line-height:1.5}
-  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:13px 22px;border-radius:12px;font-weight:700;background:var(--accent);color:#fff}
-  .btn.ghost{background:rgba(255,255,255,.1)}
-  .btn:disabled{opacity:.4;cursor:not-allowed}
+  .info{position:absolute;inset-inline-start:16px;inset-inline-end:80px;bottom:22px}
+  .badges{display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap}
+  .badge{font-size:12px;font-weight:700;padding:4px 9px;border-radius:6px;background:rgba(255,255,255,.14);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);letter-spacing:.2px}
+  .badge.deal{background:var(--brand);color:var(--brand-ink)}
+  .badge.deal.sale{background:var(--ink);color:#111}
+  .badge.priv{background:rgba(47,210,122,.18);color:#8ff0b8}
+  .price{font-size:30px;font-weight:900;letter-spacing:-.8px;line-height:1.05}
+  .price small{font-size:14px;font-weight:500;color:var(--muted);letter-spacing:0;margin-inline-start:4px}
+  .specs{display:flex;align-items:center;gap:10px;margin-top:6px;font-size:15px;font-weight:600}
+  .specs i{width:3px;height:3px;border-radius:50%;background:var(--faint)}
+  .loc{display:flex;align-items:center;gap:5px;margin-top:6px;font-size:14px;color:var(--muted)}
+  .loc svg{width:14px;height:14px}
+  .desc{font-size:14px;color:var(--muted);margin-top:6px;line-height:1.45;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 
-  /* ---------- Bottom nav ---------- */
-  nav{position:fixed;left:0;right:0;bottom:0;height:calc(var(--nav-h) + var(--safe-b));padding-bottom:var(--safe-b);
-    background:#000;border-top:1px solid var(--line);display:flex;z-index:10}
-  nav button{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:11px;color:rgba(255,255,255,.55)}
-  nav button.active{color:#fff}
-  nav svg{width:26px;height:26px}
-  nav .plus span{width:50px;height:32px;border-radius:10px;display:grid;place-items:center;color:#000;background:#fff;
-    box-shadow:-4px 0 0 var(--accent2),4px 0 0 var(--accent)}
+  .chapters{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin:12px -16px 0;padding:0 16px}
+  .chapters::-webkit-scrollbar{display:none}
+  .chap{flex:none;display:flex;align-items:center;gap:6px;padding:7px 11px;border-radius:999px;font-size:13px;font-weight:600;
+    background:rgba(255,255,255,.12);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid transparent;transition:all .2s var(--ease)}
+  .chap .t{font-size:11px;color:var(--faint);font-weight:500}
+  .chap.on{background:var(--ink);color:#111}
+  .chap.on .t{color:rgba(0,0,0,.5)}
+
+  .actions{position:absolute;inset-inline-end:10px;bottom:26px;display:flex;flex-direction:column;gap:16px;align-items:center}
+  .act{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11.5px;font-weight:600;text-shadow:0 1px 3px rgba(0,0,0,.7)}
+  .act .ic{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;background:rgba(20,18,16,.38);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);transition:transform .15s var(--ease)}
+  .act:active .ic{transform:scale(.88)}
+  .act svg{width:24px;height:24px}
+  .act.like.on .ic{color:var(--brand)}
+  .act.save.on .ic{color:var(--gold)}
+  .act.visit .ic{background:var(--brand);color:#fff}
+
+  .seg-bar{position:absolute;left:10px;right:10px;bottom:6px;height:3px;display:flex;gap:3px}
+  .seg-bar span{position:relative;height:100%;border-radius:2px;background:rgba(255,255,255,.22);overflow:hidden}
+  .seg-bar span i{position:absolute;inset:0;width:0;background:var(--ink)}
+
+  .bigheart{position:absolute;left:50%;top:45%;width:120px;height:120px;margin:-60px 0 0 -60px;color:var(--brand);pointer-events:none;opacity:0}
+  .bigheart.pop{animation:pop .75s var(--ease)}
+  @keyframes pop{0%{opacity:0;transform:scale(.3) rotate(-12deg)}25%{opacity:1;transform:scale(1.1) rotate(0)}65%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(1.25) translateY(-30px)}}
+  .paused-ind{position:absolute;left:50%;top:45%;width:76px;height:76px;margin:-38px 0 0 -38px;border-radius:50%;background:rgba(0,0,0,.35);display:grid;place-items:center;pointer-events:none}
+  .paused-ind svg{width:34px;height:34px;margin-left:4px}
+  .roomflash{position:absolute;top:calc(64px + var(--safe-t));left:50%;transform:translate(-50%,-6px);padding:6px 14px;border-radius:999px;
+    background:rgba(0,0,0,.5);backdrop-filter:blur(10px);font-weight:700;font-size:14px;opacity:0;transition:all .3s var(--ease);pointer-events:none}
+  .roomflash.show{opacity:1;transform:translate(-50%,0)}
+
+  .empty{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:32px;gap:12px}
+  .empty .art{width:96px;height:96px;border-radius:28px;background:var(--brand-soft);display:grid;place-items:center;color:var(--brand);margin-bottom:6px}
+  .empty .art svg{width:48px;height:48px}
+  .empty h2{margin:0;font-size:22px;font-weight:800}
+  .empty p{margin:0 0 6px;color:var(--muted);max-width:290px;line-height:1.55;font-size:15px}
+
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:50px;padding:0 22px;border-radius:var(--r);font-weight:700;font-size:16px;
+    background:var(--brand);color:var(--brand-ink);transition:transform .12s var(--ease),opacity .2s}
+  .btn:active{transform:scale(.97)}
+  .btn.block{width:100%}
+  .btn.ghost{background:var(--surface-2);color:var(--ink)}
+  .btn.light{background:var(--ink);color:#111}
+  .btn.wa{background:#25d366;color:#05210f}
+  .btn:disabled{opacity:.35;pointer-events:none}
+  .btn svg{width:20px;height:20px}
+
+  /* ================= NAV ================= */
+  nav{position:absolute;left:0;right:0;bottom:0;height:calc(var(--nav-h) + var(--safe-b));padding-bottom:var(--safe-b);
+    background:var(--bg);border-top:1px solid var(--line);display:flex;z-index:10}
+  nav button{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:11px;font-weight:600;color:var(--faint);transition:color .2s}
+  nav button.active{color:var(--ink)}
+  nav svg{width:24px;height:24px}
+  nav .plus span{width:52px;height:36px;border-radius:12px;display:grid;place-items:center;background:var(--brand);color:#fff;box-shadow:0 6px 18px rgba(255,107,61,.35)}
   nav .plus svg{width:22px;height:22px}
 
-  /* ---------- Pages (upload / saved / mine) ---------- */
-  .page{height:100%;overflow-y:auto;padding:calc(16px + var(--safe-t)) 16px 24px;background:#0b0b0d}
-  .page h1{font-size:22px;margin:4px 0 16px}
+  /* ================= PAGES ================= */
+  .page{height:100%;overflow-y:auto;padding:calc(14px + var(--safe-t)) 18px 28px}
+  .page-h{display:flex;align-items:center;justify-content:space-between;margin:4px 0 18px;gap:12px}
+  .page-h h1{font-size:24px;font-weight:800;margin:0;letter-spacing:-.4px}
+  .eyebrow{font-size:12px;font-weight:700;color:var(--brand);letter-spacing:.4px;margin-bottom:2px}
+
   .field{margin-bottom:14px}
-  .field label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px;font-weight:600}
-  .field input,.field select,.field textarea{width:100%;padding:12px;border-radius:10px;border:1px solid var(--line);background:#17171b;color:#fff;outline:none}
-  .field input:focus,.field select:focus,.field textarea:focus{border-color:var(--accent)}
-  .field textarea{min-height:80px;resize:vertical}
+  .field>label,.lbl{display:block;font-size:13px;color:var(--muted);margin-bottom:7px;font-weight:600}
+  .field input,.field select,.field textarea{width:100%;height:50px;padding:0 14px;border-radius:var(--r-sm);border:1px solid var(--line);background:var(--surface);outline:none;transition:border-color .2s}
+  .field textarea{height:auto;min-height:92px;padding:12px 14px;resize:vertical;line-height:1.5}
+  .field input:focus,.field select:focus,.field textarea:focus{border-color:var(--brand)}
+  .field select{appearance:none;-webkit-appearance:none}
   .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
   .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
-  .seg{display:flex;background:#17171b;border:1px solid var(--line);border-radius:10px;padding:3px}
-  .seg button{flex:1;padding:9px;border-radius:8px;font-weight:700;color:var(--muted)}
-  .seg button.on{background:var(--accent);color:#fff}
+  .seg{display:flex;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-sm);padding:4px;gap:4px}
+  .seg button{flex:1;height:40px;border-radius:7px;font-weight:700;font-size:15px;color:var(--muted);transition:all .2s var(--ease)}
+  .seg button.on{background:var(--ink);color:#111}
   .chips{display:flex;flex-wrap:wrap;gap:8px}
-  .chip{padding:7px 12px;border-radius:999px;border:1px solid var(--line);background:#17171b;font-size:13px}
-  .chip.on{border-color:var(--accent);background:rgba(255,61,110,.18)}
-  .drop{border:2px dashed var(--line);border-radius:16px;padding:26px 16px;text-align:center;cursor:pointer;color:var(--muted)}
-  .drop svg{width:44px;height:44px;margin-bottom:6px;color:#fff}
-  .drop b{color:#fff;display:block;font-size:16px;margin-bottom:4px}
-  .preview{position:relative;border-radius:16px;overflow:hidden;background:#000;aspect-ratio:9/16;max-height:52vh;margin:0 auto 10px;}
-  .preview video{width:100%;height:100%;object-fit:cover}
-  .preview .x{position:absolute;top:8px;inset-inline-end:8px;width:34px;height:34px;border-radius:50%;background:rgba(0,0,0,.55);display:grid;place-items:center}
-  .rules{font-size:13px;color:var(--muted);background:#141418;border:1px solid var(--line);border-radius:12px;padding:12px 14px;line-height:1.6;margin-bottom:16px}
-  .rules b{color:#fff}
-  .err{color:#ff6b8a;font-size:13px;margin-top:6px;min-height:1em}
-  .check{display:flex;gap:10px;align-items:flex-start;font-size:14px;margin:6px 0 16px;line-height:1.4}
-  .check input{width:20px;height:20px;margin-top:1px;accent-color:var(--accent)}
+  .chip{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 13px;border-radius:999px;border:1px solid var(--line-2);background:transparent;font-size:14px;font-weight:500;transition:all .15s}
+  .chip.on{border-color:var(--brand);background:var(--brand-soft);color:#ffb397}
+  .err{color:var(--danger);font-size:13px;margin-top:8px;min-height:1em;font-weight:500}
+  .hint{font-size:13px;color:var(--faint);line-height:1.5}
 
-  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:3px}
-  .thumb{position:relative;aspect-ratio:9/14;background:#1b1b20;border-radius:6px;overflow:hidden;cursor:pointer}
-  .thumb video{width:100%;height:100%;object-fit:cover;pointer-events:none}
-  .thumb .tp{position:absolute;bottom:4px;inset-inline-start:6px;font-size:12px;font-weight:800;text-shadow:0 1px 3px #000}
-  .thumb .del{position:absolute;top:4px;inset-inline-end:4px;width:26px;height:26px;border-radius:50%;background:rgba(0,0,0,.6);display:grid;place-items:center}
-  .thumb .del svg{width:15px;height:15px}
-  .profile-head{display:flex;align-items:center;gap:14px;margin-bottom:18px}
-  .avatar{width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:grid;place-items:center;font-size:26px;font-weight:800}
-  .stats{display:flex;gap:18px;font-size:13px;color:var(--muted)}
-  .stats b{display:block;color:#fff;font-size:17px}
+  /* wizard */
+  .steps{display:flex;gap:6px;margin-bottom:20px}
+  .steps span{flex:1;height:4px;border-radius:2px;background:var(--surface-2);overflow:hidden;position:relative}
+  .steps span.on::after{content:"";position:absolute;inset:0;background:var(--brand)}
+  .step{animation:fade .3s var(--ease)}
+  @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  .wiz-foot{display:flex;gap:10px;margin-top:18px}
+  .wiz-foot .btn{flex:1}
+  .wiz-foot .btn.ghost{flex:0 0 auto}
 
-  /* ---------- Bottom sheet ---------- */
-  .backdrop{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:20;opacity:0;pointer-events:none;transition:opacity .2s}
+  .drop{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;aspect-ratio:4/5;max-height:56vh;width:100%;
+    border:1.5px dashed var(--line-2);border-radius:var(--r-lg);background:radial-gradient(120% 80% at 50% 0%,rgba(255,107,61,.10),transparent 60%),var(--surface);color:var(--muted)}
+  .drop .art{width:72px;height:72px;border-radius:22px;background:var(--brand);color:#fff;display:grid;place-items:center;box-shadow:0 10px 30px rgba(255,107,61,.35)}
+  .drop .art svg{width:34px;height:34px}
+  .drop b{color:var(--ink);font-size:18px;font-weight:800}
+  .rules{display:grid;gap:10px;margin-top:16px}
+  .rule{display:flex;gap:12px;align-items:flex-start;font-size:14px;color:var(--muted);line-height:1.45}
+  .rule .ri{flex:none;width:30px;height:30px;border-radius:9px;background:var(--surface-2);display:grid;place-items:center;color:var(--ink)}
+  .rule .ri svg{width:16px;height:16px}
+  .rule b{color:var(--ink);font-weight:700}
+
+  .vp{position:relative;border-radius:var(--r-lg);overflow:hidden;background:#000;aspect-ratio:9/16;max-height:50vh;margin:0 auto}
+  .vp video{width:100%;height:100%;object-fit:cover}
+  .vp .x{position:absolute;top:10px;inset-inline-end:10px;height:32px;padding:0 12px;border-radius:999px;background:rgba(0,0,0,.6);font-size:13px;font-weight:600}
+  .vp .dur{position:absolute;bottom:10px;inset-inline-start:10px;padding:3px 8px;border-radius:6px;background:rgba(0,0,0,.6);font-size:12px;font-weight:700}
+  .scrub{width:100%;margin:12px 0 4px;accent-color:var(--brand);direction:ltr}
+  .scrub-row{display:flex;justify-content:space-between;font-size:12px;color:var(--faint);direction:ltr}
+  .chaplist{display:grid;gap:8px;margin-top:12px}
+  .chaprow{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--r-sm);background:var(--surface);border:1px solid var(--line)}
+  .chaprow .t{font-size:13px;color:var(--brand);font-weight:700;min-width:40px;direction:ltr;text-align:end}
+  .chaprow .n{flex:1;font-weight:600}
+  .chaprow button{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;color:var(--faint)}
+  .chaprow button svg{width:16px;height:16px}
+
+  .check{display:flex;gap:12px;align-items:flex-start;font-size:14px;margin:4px 0 6px;line-height:1.5;color:var(--muted);padding:12px;border-radius:var(--r-sm);background:var(--surface)}
+  .check input{flex:none;width:20px;height:20px;margin-top:1px;accent-color:var(--brand)}
+
+  /* grids */
+  .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+  .tile{position:relative;aspect-ratio:3/4;background:var(--surface);border-radius:var(--r);overflow:hidden;cursor:pointer}
+  .tile video{width:100%;height:100%;object-fit:cover;pointer-events:none}
+  .tile .ov{position:absolute;inset:auto 0 0 0;padding:28px 10px 10px;background:linear-gradient(to top,rgba(0,0,0,.85),transparent)}
+  .tile .tp{font-size:17px;font-weight:800}
+  .tile .ts{font-size:12px;color:var(--muted);margin-top:1px}
+  .tile .del{position:absolute;top:8px;inset-inline-end:8px;width:30px;height:30px;border-radius:50%;background:rgba(0,0,0,.6);display:grid;place-items:center}
+  .tile .del svg{width:15px;height:15px}
+  .tile .lk{position:absolute;top:8px;inset-inline-start:8px;display:flex;align-items:center;gap:4px;font-size:12px;font-weight:700;padding:3px 8px;border-radius:999px;background:rgba(0,0,0,.55)}
+  .tile .lk svg{width:12px;height:12px;color:var(--brand)}
+
+  .profile{display:flex;align-items:center;gap:14px;padding:16px;border-radius:var(--r-lg);background:var(--surface);margin-bottom:18px}
+  .avatar{width:58px;height:58px;border-radius:18px;background:var(--brand);display:grid;place-items:center;font-size:24px;font-weight:900;color:#fff}
+  .profile .nm{font-weight:800;font-size:18px}
+  .stats{display:flex;gap:22px;margin-top:4px}
+  .stats div{font-size:12px;color:var(--muted)}
+  .stats b{display:block;color:var(--ink);font-size:18px;font-weight:800}
+
+  /* ================= SHEETS ================= */
+  .backdrop{position:absolute;inset:0;background:rgba(0,0,0,.6);z-index:20;opacity:0;pointer-events:none;transition:opacity .25s}
   .backdrop.open{opacity:1;pointer-events:auto}
-  .sheet{position:fixed;left:0;right:0;bottom:0;z-index:21;background:var(--sheet);border-radius:20px 20px 0 0;max-height:86vh;overflow-y:auto;
-    padding:10px 18px calc(20px + var(--safe-b));transform:translateY(100%);transition:transform .25s ease}
+  .sheet{position:absolute;left:0;right:0;bottom:0;z-index:21;background:var(--surface);border-radius:var(--r-lg) var(--r-lg) 0 0;max-height:88%;overflow-y:auto;
+    padding:10px 18px calc(22px + var(--safe-b));transform:translateY(105%);transition:transform .32s var(--ease);border-top:1px solid var(--line)}
   .sheet.open{transform:none}
-  .sheet .grab{width:40px;height:5px;border-radius:3px;background:rgba(255,255,255,.25);margin:0 auto 14px}
-  .sheet h2{margin:0 0 14px;font-size:19px}
-  .spec{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
-  .spec div{background:#202026;border-radius:12px;padding:10px;text-align:center}
-  .spec b{display:block;font-size:17px}
-  .spec span{font-size:12px;color:var(--muted)}
-  .feat{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
-  .sheet .btns{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px}
-  .wa-btn{background:#25d366}
-  .toast{position:fixed;left:50%;bottom:calc(var(--nav-h) + var(--safe-b) + 16px);transform:translateX(-50%);background:#fff;color:#000;
-    padding:10px 16px;border-radius:10px;font-weight:600;font-size:14px;z-index:40;opacity:0;transition:opacity .2s;pointer-events:none;white-space:nowrap}
-  .toast.show{opacity:1}
+  .sheet-x{position:absolute;top:12px;inset-inline-end:12px;width:34px;height:34px;border-radius:50%;background:var(--surface-2);display:grid;place-items:center;color:var(--muted)}
+  .sheet-x svg{width:16px;height:16px}
+  .sheet .grab{width:38px;height:5px;border-radius:3px;background:var(--line-2);margin:0 auto 16px}
+  .sheet h2{margin:0;font-size:20px;font-weight:800;letter-spacing:-.3px}
+  .kv{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:16px 0}
+  .kv div{background:var(--surface-2);border-radius:var(--r-sm);padding:12px 6px;text-align:center}
+  .kv b{display:block;font-size:18px;font-weight:800}
+  .kv span{font-size:12px;color:var(--muted)}
+  .sec{font-size:13px;font-weight:700;color:var(--faint);margin:18px 0 8px;letter-spacing:.3px}
+  .roomnav{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px}
+  .roomnav button{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-radius:var(--r-sm);background:var(--surface-2);font-weight:600;font-size:14px}
+  .roomnav .t{font-size:12px;color:var(--brand);direction:ltr}
+  .poster{display:flex;align-items:center;gap:12px;padding:12px;border-radius:var(--r);background:var(--surface-2);margin-top:18px}
+  .poster .avatar{width:42px;height:42px;border-radius:13px;font-size:17px}
+  .poster .pn{font-weight:700}
+  .poster .ps{font-size:12px;color:var(--muted)}
+  .sheet .btns{display:grid;grid-template-columns:1fr auto;gap:10px;margin-top:16px}
+  .linkbtn{display:block;margin:16px auto 0;font-size:13px;color:var(--faint);text-decoration:underline}
+
+  .toast{position:absolute;left:50%;top:calc(66px + var(--safe-t));transform:translate(-50%,-10px);background:var(--ink);color:#111;
+    padding:10px 16px;border-radius:999px;font-weight:700;font-size:14px;z-index:40;opacity:0;transition:all .25s var(--ease);pointer-events:none;white-space:nowrap}
+  .toast.show{opacity:1;transform:translate(-50%,0)}
+
+  /* ================= ONBOARDING ================= */
+  .onb{position:absolute;inset:0;z-index:50;background:var(--bg);display:flex;flex-direction:column;padding:calc(30px + var(--safe-t)) 26px calc(26px + var(--safe-b))}
+  .onb .mark{width:64px;height:64px;color:var(--brand)}
+  .onb h1{font-size:34px;line-height:1.1;font-weight:900;letter-spacing:-1px;margin:26px 0 10px}
+  .onb h1 em{font-style:normal;color:var(--brand)}
+  .onb p.lead{font-size:17px;color:var(--muted);line-height:1.55;margin:0 0 28px}
+  .onb .pts{display:grid;gap:18px;margin-bottom:auto}
+  .onb .pt{display:flex;gap:14px;align-items:flex-start}
+  .onb .pt .ri{flex:none;width:44px;height:44px;border-radius:14px;background:var(--surface-2);display:grid;place-items:center;color:var(--brand)}
+  .onb .pt .ri svg{width:22px;height:22px}
+  .onb .pt b{display:block;font-size:16px;margin-bottom:2px}
+  .onb .pt span{font-size:14px;color:var(--muted);line-height:1.45}
 
   @media (min-width:700px){
-    .screen,nav,.topbar,.sheet{max-width:460px;margin-inline:auto}
-    .screen,nav{left:0;right:0}
-    body{background:#0a0a0a}
+    body{background:radial-gradient(60% 60% at 50% 30%,#1e1712,#070605)}
+    .app{left:50%;top:50%;width:400px;height:min(860px,96vh);transform:translate(-50%,-50%);border-radius:36px;
+      box-shadow:0 0 0 10px #1a1816,0 0 0 11px #2a2623,0 40px 120px rgba(0,0,0,.6)}
   }
 </style>
 </head>
 <body>
+<div class="app" id="app">
 
 <!-- ============ FEED ============ -->
 <section id="scr-feed" class="screen">
   <div class="topbar">
-    <div class="logo">דירה<b>טוק</b></div>
-    <button class="filter-btn" id="openFilter">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M7 12h10M10 18h4"/></svg>
-      סינון <span class="dot hidden" id="filterDot"></span>
+    <span></span>
+    <div class="tabs" id="dealTabs">
+      <button data-v="sale">למכירה</button>
+      <button data-v="rent">להשכרה</button>
+      <button data-v="" class="on">הכל</button>
+    </div>
+    <button class="iconbtn" id="openFilter" aria-label="סינון">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg>
+      <span class="dot hidden" id="filterDot"></span>
     </button>
   </div>
   <div id="feed"></div>
 </section>
 
-<!-- ============ UPLOAD ============ -->
+<!-- ============ UPLOAD (wizard) ============ -->
 <section id="scr-upload" class="screen hidden">
-  <div class="page">
-    <h1>העלאת סרטון דירה</h1>
-    <div class="rules">
-      <b>רק דירות 🏠</b> — כאן מעלים אך ורק סרטוני סיור בנכס: חדרים, מטבח, מרפסת, נוף.<br>
-      אורך מקסימלי: <b>3 דקות</b> · מומלץ לצלם לאורך (9:16).
-    </div>
+  <div class="page" id="upPage">
+    <div class="page-h"><div><div class="eyebrow" id="stepLbl">שלב 1 מתוך 3</div><h1 id="stepTitle">הסרטון של הדירה</h1></div></div>
+    <div class="steps"><span class="on"></span><span></span><span></span></div>
 
-    <input type="file" id="fileIn" accept="video/*" class="hidden">
-    <div class="drop" id="drop">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 10l5-3v10l-5-3"/><rect x="2" y="6" width="13" height="12" rx="2"/></svg>
-      <b>בחרו סרטון של הדירה</b>
-      צלמו עכשיו או בחרו מהגלריה
-    </div>
-    <div id="previewWrap" class="hidden">
-      <div class="preview"><video id="preview" playsinline muted loop autoplay></video>
-        <button class="x" id="clearVid" aria-label="הסר סרטון"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    <!-- Step 1: video -->
+    <div class="step" data-step="1">
+      <input type="file" id="fileIn" accept="video/*" class="hidden">
+      <button class="drop" id="drop" type="button">
+        <span class="art"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M6 10l6-6 6 6"/><path d="M4 16v3a1 1 0 001 1h14a1 1 0 001-1v-3"/></svg></span>
+        <b>העלאת סרטון סיור</b>
+        <span>צלמו עכשיו או בחרו מהגלריה</span>
+      </button>
+      <div id="vp1" class="hidden"><div class="vp"><video id="prev1" playsinline muted loop autoplay></video><button class="x" id="clearVid">החלפה</button><span class="dur num" id="durLbl"></span></div></div>
+      <div class="err" id="vidErr"></div>
+      <div class="rules">
+        <div class="rule"><span class="ri"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 11l9-8 9 8M5 9.5V21h14V9.5"/></svg></span><div><b>רק דירות.</b> סיור אמיתי בנכס — חדרים, מטבח, מרפסת, נוף. בלי פרסומות ובלי תוכן אחר.</div></div>
+        <div class="rule"><span class="ri"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span><div><b>עד 3 דקות.</b> 30–90 שניות זה האורך שהכי עובד.</div></div>
+        <div class="rule"><span class="ri"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="7" y="2" width="10" height="20" rx="2"/></svg></span><div><b>צלמו לאורך</b>, באור יום, בתנועה איטית מחדר לחדר.</div></div>
       </div>
     </div>
-    <div class="err" id="vidErr"></div>
 
-    <form id="upForm" autocomplete="off">
+    <!-- Step 2: room chapters -->
+    <div class="step hidden" data-step="2">
+      <div class="vp" style="max-height:42vh"><video id="prev2" playsinline muted></video></div>
+      <input type="range" class="scrub" id="scrub" min="0" max="100" step="0.1" value="0">
+      <div class="scrub-row num"><span id="tNow">0:00</span><span id="tDur">0:00</span></div>
+      <p class="hint" style="margin:10px 0 12px">גללו לרגע שבו מתחיל כל חדר ולחצו עליו. הצופים יוכלו לקפוץ ישר לחדר שמעניין אותם.</p>
+      <div class="chips" id="roomChips"></div>
+      <div class="chaplist" id="chapList"></div>
+    </div>
+
+    <!-- Step 3: details -->
+    <form class="step hidden" data-step="3" id="upForm" autocomplete="off" novalidate>
       <div class="field"><label>סוג עסקה</label>
-        <div class="seg" id="dealSeg"><button type="button" data-v="rent" class="on">להשכרה</button><button type="button" data-v="sale">למכירה</button></div>
-      </div>
+        <div class="seg" id="dealSeg"><button type="button" data-v="rent" class="on">להשכרה</button><button type="button" data-v="sale">למכירה</button></div></div>
       <div class="row">
-        <div class="field"><label>עיר *</label><input name="city" required list="cities" placeholder="תל אביב"></div>
+        <div class="field"><label>עיר</label><input name="city" list="cities" placeholder="תל אביב"></div>
         <div class="field"><label>שכונה / רחוב</label><input name="area" placeholder="פלורנטין"></div>
       </div>
-      <div class="field"><label id="priceLbl">מחיר לחודש (₪) *</label><input name="price" required type="number" inputmode="numeric" min="1" placeholder="6500"></div>
+      <div class="field"><label id="priceLbl">שכר דירה לחודש (₪)</label><input name="price" type="number" inputmode="numeric" min="1" placeholder="6,500"></div>
       <div class="row3">
-        <div class="field"><label>חדרים *</label><input name="rooms" required type="number" inputmode="decimal" step="0.5" min="1" max="20" placeholder="3"></div>
+        <div class="field"><label>חדרים</label><input name="rooms" type="number" inputmode="decimal" step="0.5" min="1" max="20" placeholder="3"></div>
         <div class="field"><label>מ"ר</label><input name="sqm" type="number" inputmode="numeric" min="1" placeholder="75"></div>
         <div class="field"><label>קומה</label><input name="floor" type="number" inputmode="numeric" placeholder="2"></div>
       </div>
-      <div class="field"><label>מאפיינים</label>
-        <div class="chips" id="featChips"></div>
-      </div>
-      <div class="field"><label>תיאור</label><textarea name="desc" maxlength="400" placeholder="מה מיוחד בדירה? כניסה, שכנים, תחבורה..."></textarea></div>
       <div class="row">
-        <div class="field"><label>שם *</label><input name="name" required placeholder="דני"></div>
-        <div class="field"><label>טלפון (וואטסאפ) *</label><input name="phone" required type="tel" inputmode="tel" placeholder="050-0000000" pattern="[0-9\-+ ]{9,15}"></div>
+        <div class="field"><label>כניסה</label><input name="entry" placeholder="מיידית / 1.1.27"></div>
+        <div class="field"><label>מפרסם</label><div class="seg" id="ownerSeg"><button type="button" data-v="private" class="on">פרטי</button><button type="button" data-v="agent">תיווך</button></div></div>
       </div>
-      <label class="check"><input type="checkbox" id="confirm" required> אני מאשר/ת שהסרטון מציג דירה אמיתית שמוצעת להשכרה או למכירה, ושיש לי זכות לפרסם אותו.</label>
-      <div class="err" id="formErr"></div>
-      <button class="btn" style="width:100%" id="publish" type="submit">פרסום הדירה</button>
+      <div class="field"><label>מה יש בדירה</label><div class="chips" id="featChips"></div></div>
+      <div class="field"><label>כמה מילים על הדירה</label><textarea name="desc" maxlength="400" placeholder="מה מיוחד בה? אור, שקט, שכנים, תחבורה..."></textarea></div>
+      <div class="row">
+        <div class="field"><label>שם</label><input name="name" placeholder="דני"></div>
+        <div class="field"><label>טלפון</label><input name="phone" type="tel" inputmode="tel" placeholder="050-0000000"></div>
+      </div>
+      <label class="check"><input type="checkbox" id="confirm"> אני מאשר/ת שהסרטון מציג דירה אמיתית שמוצעת כרגע, ושיש לי זכות לפרסם אותו.</label>
     </form>
+
+    <div class="err" id="formErr"></div>
+    <div class="wiz-foot">
+      <button class="btn ghost hidden" id="wizBack" type="button">חזרה</button>
+      <button class="btn" id="wizNext" type="button" disabled>המשך</button>
+    </div>
     <datalist id="cities"></datalist>
   </div>
 </section>
 
 <!-- ============ SAVED ============ -->
-<section id="scr-saved" class="screen hidden"><div class="page"><h1>דירות ששמרתי</h1><div id="savedGrid"></div></div></section>
+<section id="scr-saved" class="screen hidden"><div class="page">
+  <div class="page-h"><div><div class="eyebrow">המועדפים שלי</div><h1>דירות ששמרתי</h1></div></div>
+  <div id="savedGrid"></div>
+</div></section>
 
 <!-- ============ MINE ============ -->
 <section id="scr-mine" class="screen hidden"><div class="page">
-  <div class="profile-head"><div class="avatar" id="avatar">🏠</div>
-    <div><div style="font-weight:800;font-size:18px" id="myName">הדירות שלי</div>
-      <div class="stats"><div><b id="stCount">0</b>מודעות</div><div><b id="stLikes">0</b>לייקים</div></div></div></div>
+  <div class="page-h"><div><div class="eyebrow">פרופיל</div><h1>הדירות שלי</h1></div></div>
+  <div class="profile"><div class="avatar" id="avatar">?</div>
+    <div><div class="nm" id="myName">אורח/ת</div>
+      <div class="stats num"><div><b id="stCount">0</b>מודעות</div><div><b id="stLikes">0</b>לייקים</div><div><b id="stSaves">0</b>צפיות</div></div></div></div>
   <div id="mineGrid"></div>
 </div></section>
 
 <!-- ============ NAV ============ -->
 <nav>
-  <button data-go="feed" class="active"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3l9 8h-3v9h-5v-6h-2v6H6v-9H3z"/></svg>בית</button>
-  <button data-go="saved"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 3h12a1 1 0 011 1v17l-7-4-7 4V4a1 1 0 011-1z"/></svg>שמורים</button>
-  <button data-go="upload" class="plus"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span></button>
-  <button data-go="mine"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7z"/></svg>הדירות שלי</button>
+  <button data-go="feed" class="active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 10.5L12 3l9 7.5V20a1 1 0 01-1 1h-5v-6h-6v6H4a1 1 0 01-1-1z"/></svg>גילוי</button>
+  <button data-go="saved"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M6 3h12a1 1 0 011 1v17l-7-4.5L5 21V4a1 1 0 011-1z"/></svg>שמורים</button>
+  <button data-go="upload" class="plus" aria-label="העלאה"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span></button>
+  <button data-go="mine"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c.5-4 3.8-6.5 8-6.5s7.5 2.5 8 6.5" stroke-linecap="round"/></svg>הדירות שלי</button>
 </nav>
 
 <!-- ============ SHEETS ============ -->
 <div class="backdrop" id="backdrop"></div>
-<div class="sheet" id="detailSheet"><div class="grab"></div><div id="detailBody"></div></div>
-<div class="sheet" id="filterSheet"><div class="grab"></div>
-  <h2>סינון דירות</h2>
-  <div class="field"><label>סוג עסקה</label>
-    <div class="seg" id="fDeal"><button data-v="" class="on">הכל</button><button data-v="rent">השכרה</button><button data-v="sale">מכירה</button></div></div>
-  <div class="field"><label>עיר</label><input id="fCity" list="cities" placeholder="כל הערים"></div>
+<div class="sheet" id="detailSheet"><div class="grab"></div><button class="sheet-x" aria-label="סגירה"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button><div id="detailBody"></div></div>
+<div class="sheet" id="filterSheet"><div class="grab"></div><button class="sheet-x" aria-label="סגירה"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  <h2 style="margin-bottom:18px">מה אתם מחפשים?</h2>
+  <div class="field"><label>עיר</label><input id="fCity" list="cities" placeholder="כל הארץ"></div>
   <div class="row">
     <div class="field"><label>מחיר עד (₪)</label><input id="fMax" type="number" inputmode="numeric" placeholder="ללא הגבלה"></div>
-    <div class="field"><label>חדרים מ־</label><select id="fRooms"><option value="">הכל</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select></div>
+    <div class="field"><label>מינימום חדרים</label><select id="fRooms"><option value="">הכל</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select></div>
   </div>
-  <div class="btns"><button class="btn ghost" id="fReset">איפוס</button><button class="btn" id="fApply">הצג דירות</button></div>
+  <div class="field"><label>חובה שיהיה</label><div class="chips" id="fFeats"></div></div>
+  <div class="field"><label>מפרסם</label><div class="seg" id="fOwner"><button data-v="" class="on">הכל</button><button data-v="private">פרטי בלבד</button><button data-v="agent">תיווך</button></div></div>
+  <div class="row" style="margin-top:8px"><button class="btn ghost" id="fReset">ניקוי</button><button class="btn" id="fApply">הצגת דירות</button></div>
 </div>
 <div class="toast" id="toast"></div>
+
+<!-- ============ ONBOARDING ============ -->
+<div class="onb hidden" id="onb">
+  <svg class="mark" viewBox="0 0 64 64" fill="none"><path d="M8 29L32 9l24 20v24a3 3 0 01-3 3H11a3 3 0 01-3-3z" fill="currentColor"/><path d="M27 26v18l15-9z" fill="#fff"/></svg>
+  <h1>דירות, כמו<br>שהן <em>באמת</em>.</h1>
+  <p class="lead">בלי תמונות מטעות וזוויות רחבות. סיור וידאו קצר בכל דירה — וגוללים לבאה.</p>
+  <div class="pts">
+    <div class="pt"><span class="ri"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M7 4v16M17 4v16M3 12h18"/></svg></span><div><b>קופצים ישר לחדר</b><span>מטבח? מרפסת? כל סרטון מחולק לחדרים.</span></div></div>
+    <div class="pt"><span class="ri"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7.5-4.6-9.6-9.2C.9 8.5 3 4.5 6.8 4.5c2.2 0 3.6 1.2 5.2 3 1.6-1.8 3-3 5.2-3 3.8 0 5.9 4 4.4 7.3C19.5 16.4 12 21 12 21z"/></svg></span><div><b>שומרים מה שאהבתם</b><span>ומשווים בשקט אחר כך.</span></div></div>
+    <div class="pt"><span class="ri"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/></svg></span><div><b>מתאמים ביקור בלחיצה</b><span>ישר מול בעל הדירה, בוואטסאפ.</span></div></div>
+  </div>
+  <button class="btn block" id="onbGo" style="margin-top:28px">בואו נתחיל</button>
+</div>
+
+</div>
 
 <script>
 (() => {
 'use strict';
 /* =====================================================================
-   Storage: IndexedDB (video blobs + listing metadata stay on the device).
-   Swap `store` for a real backend (Supabase / Firebase) to share between users.
+   Storage layer — IndexedDB on-device for now.
+   Replace `store` with a backend (Supabase / Firebase) to share between users.
    ===================================================================== */
-const DB_NAME = 'diratok', DB_VER = 1;
-const MAX_SECONDS = 180, MAX_MB = 300;
-const FEATURES = ['מרפסת','חניה','ממ"ד','מעלית','מזגן','מרוהטת','חיות מחמד','משופצת','מחסן','נגישות'];
-const CITIES = ['תל אביב','ירושלים','חיפה','באר שבע','רמת גן','גבעתיים','הרצליה','רעננה','כפר סבא','פתח תקווה','ראשון לציון','חולון','בת ים','נתניה','אשדוד','רחובות','מודיעין','הוד השרון','חדרה','אילת'];
+const DB_NAME='diratok', DB_VER=1, MAX_SECONDS=180, MIN_SECONDS=3, MAX_MB=300;
+const FEATURES=['מרפסת','חניה','ממ"ד','מעלית','מזגן','מרוהטת','חיות מחמד','משופצת','מחסן','נגישות'];
+const ROOMS=['כניסה','סלון','מטבח','חדר שינה','חדר ילדים','חדר עבודה','חדר רחצה','מרפסת','נוף','חצר','בניין'];
+const CITIES=['תל אביב','ירושלים','חיפה','באר שבע','רמת גן','גבעתיים','הרצליה','רעננה','כפר סבא','פתח תקווה','ראשון לציון','חולון','בת ים','נתניה','אשדוד','רחובות','מודיעין','הוד השרון','חדרה','אילת'];
 
-function openDB(){
-  return new Promise((res,rej)=>{
-    const r = indexedDB.open(DB_NAME, DB_VER);
-    r.onupgradeneeded = () => {
-      const db = r.result;
-      if(!db.objectStoreNames.contains('listings')) db.createObjectStore('listings',{keyPath:'id'});
-      if(!db.objectStoreNames.contains('videos')) db.createObjectStore('videos');
-    };
-    r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
-  });
-}
-const dbp = openDB();
-async function tx(stores, mode, fn){
-  const db = await dbp;
-  return new Promise((res,rej)=>{
-    const t = db.transaction(stores, mode); let out;
-    Promise.resolve(fn(t)).then(v=>out=v);
-    t.oncomplete = () => res(out); t.onerror = () => rej(t.error); t.onabort = () => rej(t.error);
-  });
-}
-const reqP = r => new Promise((res,rej)=>{ r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); });
-const store = {
-  all: () => tx(['listings'],'readonly', t => reqP(t.objectStore('listings').getAll())),
-  put: (l, blob) => tx(['listings','videos'],'readwrite', t => { t.objectStore('listings').put(l); if(blob) t.objectStore('videos').put(blob, l.id); }),
-  update: l => tx(['listings'],'readwrite', t => { t.objectStore('listings').put(l); }),
-  video: id => tx(['videos'],'readonly', t => reqP(t.objectStore('videos').get(id))),
-  remove: id => tx(['listings','videos'],'readwrite', t => { t.objectStore('listings').delete(id); t.objectStore('videos').delete(id); }),
+function openDB(){return new Promise((res,rej)=>{const r=indexedDB.open(DB_NAME,DB_VER);
+  r.onupgradeneeded=()=>{const db=r.result;
+    if(!db.objectStoreNames.contains('listings'))db.createObjectStore('listings',{keyPath:'id'});
+    if(!db.objectStoreNames.contains('videos'))db.createObjectStore('videos');};
+  r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});}
+const dbp=openDB();
+async function tx(stores,mode,fn){const db=await dbp;return new Promise((res,rej)=>{const t=db.transaction(stores,mode);let out;
+  Promise.resolve(fn(t)).then(v=>out=v);t.oncomplete=()=>res(out);t.onerror=()=>rej(t.error);t.onabort=()=>rej(t.error);});}
+const reqP=r=>new Promise((res,rej)=>{r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});
+const store={
+  all:()=>tx(['listings'],'readonly',t=>reqP(t.objectStore('listings').getAll())),
+  put:(l,blob)=>tx(['listings','videos'],'readwrite',t=>{t.objectStore('listings').put(l);if(blob)t.objectStore('videos').put(blob,l.id);}),
+  update:l=>tx(['listings'],'readwrite',t=>{t.objectStore('listings').put(l);}),
+  video:id=>tx(['videos'],'readonly',t=>reqP(t.objectStore('videos').get(id))),
+  remove:id=>tx(['listings','videos'],'readwrite',t=>{t.objectStore('listings').delete(id);t.objectStore('videos').delete(id);}),
 };
+const LS={get(k,d){try{const v=localStorage.getItem('dt_'+k);return v==null?d:JSON.parse(v);}catch{return d;}},
+          set(k,v){try{localStorage.setItem('dt_'+k,JSON.stringify(v));}catch{}}};
 
-/* Per-device state */
-const LS = {
-  get(k,d){ try{ const v = localStorage.getItem('dt_'+k); return v==null?d:JSON.parse(v);}catch{ return d; } },
-  set(k,v){ try{ localStorage.setItem('dt_'+k, JSON.stringify(v)); }catch{} }
-};
-let liked = new Set(LS.get('liked',[])), saved = new Set(LS.get('saved',[])), mine = new Set(LS.get('mine',[]));
-let filters = LS.get('filters',{deal:'',city:'',max:'',rooms:''});
-let muted = true;
-let listings = [];
+let liked=new Set(LS.get('liked',[])), saved=new Set(LS.get('saved',[])), mine=new Set(LS.get('mine',[])), reported=new Set(LS.get('reported',[]));
+const EMPTY_F={deal:'',city:'',max:'',rooms:'',feats:[],owner:''};
+let filters={...EMPTY_F,...LS.get('filters',{})};
+let muted=true, listings=[], current='feed';
 
 /* ---------- helpers ---------- */
-const $ = s => document.querySelector(s);
-const esc = s => String(s??'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const fmt = n => Number(n).toLocaleString('he-IL');
-const urlCache = new Map();
-async function videoURL(id){
-  if(urlCache.has(id)) return urlCache.get(id);
-  const b = await store.video(id); if(!b) return '';
-  const u = URL.createObjectURL(b); urlCache.set(id,u); return u;
-}
-let toastT;
-function toast(msg){ const t=$('#toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),1800); }
-const ICON = {
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt=n=>Number(n).toLocaleString('he-IL');
+const mmss=s=>{s=Math.max(0,Math.floor(s||0));return Math.floor(s/60)+':'+String(s%60).padStart(2,'0');};
+const urlCache=new Map();
+async function videoURL(id){if(urlCache.has(id))return urlCache.get(id);const b=await store.video(id);if(!b)return'';const u=URL.createObjectURL(b);urlCache.set(id,u);return u;}
+let toastT;function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),1900);}
+const I={
   heart:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7.5-4.6-9.6-9.2C.9 8.5 3 4.5 6.8 4.5c2.2 0 3.6 1.2 5.2 3 1.6-1.8 3-3 5.2-3 3.8 0 5.9 4 4.4 7.3C19.5 16.4 12 21 12 21z"/></svg>',
-  save:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 3h12a1 1 0 011 1v17l-7-4-7 4V4a1 1 0 011-1z"/></svg>',
-  info:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5" stroke-linecap="round"/></svg>',
-  share:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M14 4l8 7.5-8 7.5v-4.5c-6 0-9 2-12 5.5 1-6 4-10.5 12-11.5z"/></svg>',
-  wa:'<svg viewBox="0 0 24 24" fill="#fff"><path d="M12 2a10 10 0 00-8.6 15.1L2 22l5-1.3A10 10 0 1012 2zm5.3 14.1c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .2-3.3-.7-2.8-1.1-4.6-4-4.7-4.2-.1-.2-1.1-1.5-1.1-2.9s.7-2 1-2.3c.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 2c.1.2.1.4 0 .5l-.3.5-.4.4c-.1.1-.3.3-.1.6.1.3.6 1.1 1.4 1.8 1 .9 1.8 1.1 2 1.3.3.1.4.1.6-.1l.8-1c.2-.3.4-.2.6-.1l1.9.9c.3.1.4.2.5.3.1.2.1.7-.1 1.4z"/></svg>',
-  vol:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 9v6h4l5 4V5L8 9zM16 8a5 5 0 010 8M18.5 5.5a8.5 8.5 0 010 13" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M4 9v6h4l5 4V5L8 9z"/></svg>',
-  mute:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16 9l5 6M21 9l-5 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
-  play:'<svg viewBox="0 0 24 24" fill="#fff"><path d="M8 5v14l11-7z"/></svg>',
+  save:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 3h12a1 1 0 011 1v17l-7-4.5L5 21V4a1 1 0 011-1z"/></svg>',
+  share:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v7a1 1 0 001 1h14a1 1 0 001-1v-7M12 3v12M7 8l5-5 5 5"/></svg>',
+  cal:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/></svg>',
+  vol:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9z" fill="currentColor"/><path d="M16.5 8.5a5 5 0 010 7M19 6a8.5 8.5 0 010 12"/></svg>',
+  mute:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9z" fill="currentColor"/><path d="M17 9.5l5 5M22 9.5l-5 5"/></svg>',
+  play:'<svg viewBox="0 0 24 24" fill="#fff"><path d="M7 4.5v15l13-7.5z"/></svg>',
+  pin:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a7 7 0 00-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 00-7-7zm0 9.5A2.5 2.5 0 1112 6.5a2.5 2.5 0 010 5z"/></svg>',
   trash:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>',
-  house:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M3 11l9-8 9 8M5 9.5V21h14V9.5M10 21v-6h4v6"/></svg>',
+  x:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+  house:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M3 10.5L12 3l9 7.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1z"/><path d="M10 9.5v6l5-3z" fill="currentColor"/></svg>',
+  wa:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 00-8.6 15.1L2 22l5-1.3A10 10 0 1012 2zm5.3 14.1c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .2-3.3-.7-2.8-1.1-4.6-4-4.7-4.2-.1-.2-1.1-1.5-1.1-2.9s.7-2 1-2.3c.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 2c.1.2.1.4 0 .5l-.3.5-.4.4c-.1.1-.3.3-.1.6.1.3.6 1.1 1.4 1.8 1 .9 1.8 1.1 2 1.3.3.1.4.1.6-.1l.8-1c.2-.3.4-.2.6-.1l1.9.9c.3.1.4.2.5.3.1.2.1.7-.1 1.4z"/></svg>',
+  phone:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6.6 10.8a15 15 0 006.6 6.6l2.2-2.2a1 1 0 011-.25 11.4 11.4 0 003.6.6 1 1 0 011 1V20a1 1 0 01-1 1A17 17 0 013 4a1 1 0 011-1h3.5a1 1 0 011 1c0 1.25.2 2.45.6 3.6a1 1 0 01-.25 1z"/></svg>',
 };
-const dealLabel = l => l.deal==='sale' ? 'למכירה' : 'להשכרה';
-const priceHTML = l => `₪${fmt(l.price)}${l.deal==='rent'?' <small>/ חודש</small>':''}`;
-const waLink = (l, txt) => {
-  let p = String(l.phone).replace(/[^\d+]/g,''); if(p.startsWith('0')) p = '972'+p.slice(1); p = p.replace('+','');
-  return `https://wa.me/${p}?text=${encodeURIComponent(txt || `היי ${l.name}, ראיתי בדירהטוק את הדירה ב${l.city} (${l.rooms} חד׳, ₪${fmt(l.price)}). היא עדיין רלוונטית?`)}`;
-};
+const dealLabel=l=>l.deal==='sale'?'למכירה':'להשכרה';
+const priceHTML=l=>`₪${fmt(l.price)}${l.deal==='rent'?'<small>לחודש</small>':''}`;
+const phoneIntl=p=>{p=String(p).replace(/[^\d+]/g,'');if(p.startsWith('0'))p='972'+p.slice(1);return p.replace('+','');};
+const wa=(l,txt)=>`https://wa.me/${phoneIntl(l.phone)}?text=${encodeURIComponent(txt)}`;
+const waAsk=l=>wa(l,`היי ${l.name}, ראיתי בדירהטוק את הדירה ב${l.city}${l.area?' ('+l.area+')':''} — ${l.rooms} חד׳, ₪${fmt(l.price)}. היא עדיין רלוונטית?`);
+const waVisit=l=>wa(l,`היי ${l.name}, ראיתי בדירהטוק את הדירה ב${l.city}${l.area?' ('+l.area+')':''} ואשמח לתאם ביקור. מתי נוח לך?`);
+const loc=l=>`${esc(l.city)}${l.area?' · '+esc(l.area):''}`;
 
 /* ---------- navigation ---------- */
-let current = 'feed';
 function go(name){
-  current = name;
-  document.querySelectorAll('.screen').forEach(s=>s.classList.add('hidden'));
-  $('#scr-'+name).classList.remove('hidden');
-  document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('active', b.dataset.go===name));
-  if(name!=='feed') pauseAll(); else playVisible();
-  if(name==='saved') renderGrid('#savedGrid', listings.filter(l=>saved.has(l.id)), false);
-  if(name==='mine') renderMine();
-  if(name==='upload') prefillContact();
+  current=name;
+  $$('.screen').forEach(s=>s.classList.add('hidden')); $('#scr-'+name).classList.remove('hidden');
+  $$('nav button').forEach(b=>b.classList.toggle('active',b.dataset.go===name));
+  closeSheets();
+  if(name!=='feed')pauseAll();else playVisible();
+  if(name==='saved')renderGrid('#savedGrid',listings.filter(l=>saved.has(l.id)),false);
+  if(name==='mine')renderMine();
+  if(name==='upload')wizShow(wiz.step);
 }
-document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>go(b.dataset.go));
+$$('nav button').forEach(b=>b.onclick=()=>go(b.dataset.go));
 
-/* ---------- feed ---------- */
+/* ================= FEED ================= */
 function matches(l){
-  if(filters.deal && l.deal!==filters.deal) return false;
-  if(filters.city && !l.city.includes(filters.city.trim())) return false;
-  if(filters.max && Number(l.price) > Number(filters.max)) return false;
-  if(filters.rooms && Number(l.rooms) < Number(filters.rooms)) return false;
+  if(reported.has(l.id))return false;
+  const f=filters;
+  if(f.deal&&l.deal!==f.deal)return false;
+  if(f.city&&!l.city.includes(f.city.trim()))return false;
+  if(f.max&&Number(l.price)>Number(f.max))return false;
+  if(f.rooms&&Number(l.rooms)<Number(f.rooms))return false;
+  if(f.owner&&(l.owner||'private')!==f.owner)return false;
+  if(f.feats.length&&!f.feats.every(x=>(l.features||[]).includes(x)))return false;
   return true;
 }
-const io = new IntersectionObserver(entries=>{
-  entries.forEach(e=>{
-    const v = e.target.querySelector('video'); if(!v) return;
-    if(e.isIntersecting && e.intersectionRatio>.6 && current==='feed'){
-      ensureSrc(e.target).then(()=>{ v.muted = muted; v.play().catch(()=>{}); });
-      // preload next card
-      const n = e.target.nextElementSibling; if(n) ensureSrc(n);
-    } else { v.pause(); }
-  });
-},{threshold:[0,.6,1]});
-async function ensureSrc(card){
-  const v = card.querySelector('video'); if(!v || v.src) return;
-  v.src = await videoURL(card.dataset.id);
-}
-function pauseAll(){ document.querySelectorAll('#feed video').forEach(v=>v.pause()); }
-function playVisible(){
-  const feed = $('#feed'); const idx = Math.round(feed.scrollTop / (feed.clientHeight||1));
-  const card = feed.children[idx]; if(!card) return;
-  const v = card.querySelector('video'); if(v) ensureSrc(card).then(()=>{ v.muted=muted; v.play().catch(()=>{}); });
-}
+const filtersActive=()=>!!(filters.city||filters.max||filters.rooms||filters.owner||filters.feats.length);
+
+const io=new IntersectionObserver(es=>{es.forEach(e=>{
+  const v=e.target.querySelector('video');if(!v)return;
+  if(e.isIntersecting&&e.intersectionRatio>.6&&current==='feed'){
+    ensureSrc(e.target).then(()=>{v.muted=muted;v.play().catch(()=>{});});
+    const n=e.target.nextElementSibling;if(n)ensureSrc(n);
+    bumpView(e.target.dataset.id);
+  }else v.pause();
+});},{threshold:[0,.6,1]});
+async function ensureSrc(card){const v=card.querySelector('video');if(!v||v.src)return;v.src=await videoURL(card.dataset.id);}
+function pauseAll(){$$('#feed video').forEach(v=>v.pause());}
+function playVisible(){const f=$('#feed');const c=f.children[Math.round(f.scrollTop/(f.clientHeight||1))];
+  const v=c?.querySelector('video');if(v)ensureSrc(c).then(()=>{v.muted=muted;v.play().catch(()=>{});});}
+const viewed=new Set();
+function bumpView(id){if(viewed.has(id))return;viewed.add(id);const l=listings.find(x=>x.id===id);if(l){l.views=(l.views||0)+1;store.update(l);}}
+
+function syncTabs(){$$('#dealTabs button').forEach(b=>b.classList.toggle('on',b.dataset.v===filters.deal));$('#filterDot').classList.toggle('hidden',!filtersActive());}
+$$('#dealTabs button').forEach(b=>b.onclick=()=>{filters.deal=b.dataset.v;LS.set('filters',filters);syncTabs();renderFeed();});
 
 function renderFeed(){
-  const feed = $('#feed'); io.disconnect(); feed.innerHTML='';
-  const items = listings.filter(matches).sort((a,b)=>b.created-a.created);
-  const active = filters.deal||filters.city||filters.max||filters.rooms;
-  $('#filterDot').classList.toggle('hidden', !active);
+  const feed=$('#feed');io.disconnect();feed.innerHTML='';syncTabs();
+  const items=listings.filter(matches).sort((a,b)=>b.created-a.created);
   if(!items.length){
-    feed.innerHTML = `<div class="empty">${ICON.house}
-      <h2>${active ? 'לא נמצאו דירות' : 'עוד אין כאן דירות'}</h2>
-      <p>${active ? 'נסו להרחיב את הסינון — מחיר, עיר או מספר חדרים.' : 'היו הראשונים להעלות סרטון סיור בדירה. 30 שניות של וידאו שוות יותר מ־30 תמונות.'}</p>
-      ${active ? '<button class="btn ghost" id="emptyReset">איפוס סינון</button>' : '<button class="btn" id="emptyUp">העלאת דירה</button>'}</div>`;
+    const narrowed=filtersActive()||filters.deal;
+    feed.innerHTML=`<div class="empty"><div class="art">${I.house}</div>
+      <h2>${narrowed?'אין התאמות כרגע':'הפיד מחכה לדירה הראשונה'}</h2>
+      <p>${narrowed?'נסו להרחיב את החיפוש — עיר, מחיר או מספר חדרים.':'יש לכם דירה להשכרה או למכירה? סיור וידאו של חצי דקה שווה יותר מעשרים תמונות.'}</p>
+      ${narrowed?'<button class="btn ghost" id="emptyReset">ניקוי סינון</button>':'<button class="btn" id="emptyUp">העלאת דירה</button>'}</div>`;
     $('#emptyUp')?.addEventListener('click',()=>go('upload'));
-    $('#emptyReset')?.addEventListener('click',()=>{ filters={deal:'',city:'',max:'',rooms:''}; LS.set('filters',filters); syncFilterUI(); renderFeed(); });
+    $('#emptyReset')?.addEventListener('click',()=>{filters={...EMPTY_F};LS.set('filters',filters);renderFeed();});
     return;
   }
-  for(const l of items){
-    const c = document.createElement('article'); c.className='card'; c.dataset.id=l.id;
-    const feats = (l.features||[]).slice(0,3).map(f=>`<span class="tag">${esc(f)}</span>`).join('');
-    c.innerHTML = `
-      <video playsinline loop muted preload="metadata"></video>
-      <div class="shade"></div>
-      <svg class="bigheart" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7.5-4.6-9.6-9.2C.9 8.5 3 4.5 6.8 4.5c2.2 0 3.6 1.2 5.2 3 1.6-1.8 3-3 5.2-3 3.8 0 5.9 4 4.4 7.3C19.5 16.4 12 21 12 21z"/></svg>
-      <div class="paused-ind hidden">${ICON.play}</div>
-      <button class="mute" aria-label="קול">${muted?ICON.mute:ICON.vol}</button>
-      <div class="info">
-        <div class="price">${priceHTML(l)}</div>
-        <div class="tags"><span class="tag deal ${l.deal}">${dealLabel(l)}</span><span class="tag">${esc(l.rooms)} חד׳</span>${l.sqm?`<span class="tag">${esc(l.sqm)} מ"ר</span>`:''}${feats}</div>
-        <div class="loc">📍 ${esc(l.city)}${l.area?' · '+esc(l.area):''}</div>
-        ${l.desc?`<div class="desc">${esc(l.desc)}</div>`:''}
-      </div>
-      <div class="actions">
-        <button class="act like ${liked.has(l.id)?'on':''}"><span class="ic">${ICON.heart}</span><span class="n">${fmt(l.likes||0)}</span></button>
-        <button class="act saved ${saved.has(l.id)?'on':''}"><span class="ic">${ICON.save}</span>שמירה</button>
-        <button class="act more"><span class="ic">${ICON.info}</span>פרטים</button>
-        <button class="act share"><span class="ic">${ICON.share}</span>שיתוף</button>
-        <a class="act wa" href="${waLink(l)}" target="_blank" rel="noopener"><span class="ic">${ICON.wa}</span>וואטסאפ</a>
-      </div>
-      <div class="progress"><i></i></div>`;
-    wireCard(c,l);
-    feed.appendChild(c); io.observe(c);
-  }
+  for(const l of items){const c=buildCard(l);feed.appendChild(c);io.observe(c);}
 }
 
-function wireCard(c,l){
-  const v = c.querySelector('video'), bar = c.querySelector('.progress i'), pi = c.querySelector('.paused-ind');
-  v.addEventListener('timeupdate',()=>{ if(v.duration) bar.style.width = (v.currentTime/v.duration*100)+'%'; });
-  v.addEventListener('play',()=>pi.classList.add('hidden'));
-  let lastTap = 0, tapT;
-  c.addEventListener('click', e=>{
-    if(e.target.closest('.actions,.mute,.info')) return;
-    const now = Date.now();
-    if(now - lastTap < 280){ clearTimeout(tapT); lastTap=0; doLike(c,l,true); return; }
-    lastTap = now;
-    tapT = setTimeout(()=>{ if(v.paused){ v.play().catch(()=>{}); } else { v.pause(); pi.classList.remove('hidden'); } }, 280);
+function buildCard(l){
+  const c=document.createElement('article');c.className='card';c.dataset.id=l.id;
+  const ch=(l.chapters||[]).slice().sort((a,b)=>a.t-b.t);
+  const dur=l.duration||0;
+  const segs=ch.length&&dur?ch.map((x,i)=>{const end=i<ch.length-1?ch[i+1].t:dur;return Math.max(.02,(end-(i?x.t:0))/dur);}):[1];
+  c.innerHTML=`
+    <video playsinline loop muted preload="metadata"></video>
+    <div class="shade"></div>
+    <svg class="bigheart" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7.5-4.6-9.6-9.2C.9 8.5 3 4.5 6.8 4.5c2.2 0 3.6 1.2 5.2 3 1.6-1.8 3-3 5.2-3 3.8 0 5.9 4 4.4 7.3C19.5 16.4 12 21 12 21z"/></svg>
+    <div class="paused-ind hidden">${I.play}</div>
+    <div class="roomflash"></div>
+    <div class="info">
+      <div class="badges"><span class="badge deal ${l.deal}">${dealLabel(l)}</span>${(l.owner||'private')==='private'?'<span class="badge priv">ללא תיווך</span>':'<span class="badge">תיווך</span>'}${l.entry?`<span class="badge">כניסה: ${esc(l.entry)}</span>`:''}</div>
+      <div class="price num">${priceHTML(l)}</div>
+      <div class="specs num"><span>${esc(l.rooms)} חדרים</span>${l.sqm?`<i></i><span>${esc(l.sqm)} מ"ר</span>`:''}${l.floor!==''&&l.floor!=null?`<i></i><span>קומה ${esc(l.floor)}</span>`:''}</div>
+      <div class="loc">${I.pin}${loc(l)}</div>
+      ${l.desc?`<div class="desc">${esc(l.desc)}</div>`:''}
+      ${ch.length?`<div class="chapters">${ch.map((x,i)=>`<button class="chap" data-i="${i}">${esc(x.room)}<span class="t num">${mmss(x.t)}</span></button>`).join('')}</div>`:''}
+    </div>
+    <div class="actions">
+      <button class="act like ${liked.has(l.id)?'on':''}"><span class="ic">${I.heart}</span><span class="n num">${fmt(l.likes||0)}</span></button>
+      <button class="act save ${saved.has(l.id)?'on':''}"><span class="ic">${I.save}</span>שמירה</button>
+      <a class="act visit" href="${waVisit(l)}" target="_blank" rel="noopener"><span class="ic">${I.cal}</span>ביקור</a>
+      <button class="act share"><span class="ic">${I.share}</span>שיתוף</button>
+      <button class="act mute"><span class="ic">${muted?I.mute:I.vol}</span>${muted?'קול':'השתק'}</button>
+    </div>
+    <div class="seg-bar">${segs.map(w=>`<span style="flex:${w}"><i></i></span>`).join('')}</div>`;
+  wireCard(c,l,ch);
+  return c;
+}
+
+function wireCard(c,l,ch){
+  const v=c.querySelector('video'),pi=c.querySelector('.paused-ind'),flash=c.querySelector('.roomflash');
+  const bars=[...c.querySelectorAll('.seg-bar i')],chips=[...c.querySelectorAll('.chap')];
+  let lastRoom=-1,flashT;
+  v.addEventListener('timeupdate',()=>{
+    if(!v.duration)return;const t=v.currentTime,d=v.duration;
+    if(!ch.length){bars[0].style.width=(t/d*100)+'%';return;}
+    let idx=0;for(let i=0;i<ch.length;i++)if(t>=ch[i].t-0.05)idx=i;
+    ch.forEach((x,i)=>{const s=i?x.t:0,e=i<ch.length-1?ch[i+1].t:d;bars[i].style.width=(t>=e?100:t<=s?0:(t-s)/(e-s)*100)+'%';});
+    if(idx!==lastRoom){lastRoom=idx;chips.forEach((b,i)=>b.classList.toggle('on',i===idx));
+      const cs=chips[idx]?.parentElement;if(cs){const b=chips[idx];cs.scrollTo({left:b.offsetLeft-cs.clientWidth/2+b.clientWidth/2,behavior:'smooth'});}
+      if(t>0.3){flash.textContent=ch[idx].room;flash.classList.add('show');clearTimeout(flashT);flashT=setTimeout(()=>flash.classList.remove('show'),1300);}}
   });
-  c.querySelector('.mute').onclick = ()=>{
-    muted = !muted;
-    document.querySelectorAll('#feed .mute').forEach(b=>b.innerHTML = muted?ICON.mute:ICON.vol);
-    document.querySelectorAll('#feed video').forEach(x=>x.muted=muted);
-  };
-  c.querySelector('.like').onclick = ()=>doLike(c,l,false);
-  c.querySelector('.saved').onclick = e=>{
-    const on = !saved.has(l.id); on?saved.add(l.id):saved.delete(l.id); LS.set('saved',[...saved]);
-    e.currentTarget.classList.toggle('on',on); toast(on?'נשמר לרשימה ⭐':'הוסר מהשמורים');
-  };
-  c.querySelector('.more').onclick = ()=>openDetails(l);
-  c.querySelector('.info').onclick = ()=>openDetails(l);
-  c.querySelector('.share').onclick = async ()=>{
-    const text = `${dealLabel(l)}: ${l.rooms} חד׳ ב${l.city}${l.area?', '+l.area:''} — ₪${fmt(l.price)}`;
-    try{ if(navigator.share){ await navigator.share({title:'דירהטוק', text}); return; } }catch{ return; }
-    try{ await navigator.clipboard.writeText(text); toast('הפרטים הועתקו'); }catch{ toast(text); }
-  };
+  v.addEventListener('play',()=>pi.classList.add('hidden'));
+  chips.forEach(b=>b.onclick=e=>{e.stopPropagation();v.currentTime=ch[+b.dataset.i].t+0.01;v.play().catch(()=>{});});
+  let lastTap=0,tapT;
+  c.addEventListener('click',e=>{
+    if(e.target.closest('.actions,.chapters,.badges'))return;
+    if(e.target.closest('.info')){openDetails(l,v);return;}
+    const now=Date.now();
+    if(now-lastTap<280){clearTimeout(tapT);lastTap=0;doLike(c,l,true);return;}
+    lastTap=now;tapT=setTimeout(()=>{if(v.paused)v.play().catch(()=>{});else{v.pause();pi.classList.remove('hidden');}},280);
+  });
+  c.querySelector('.mute').onclick=()=>{muted=!muted;
+    $$('#feed .act.mute').forEach(b=>b.innerHTML=`<span class="ic">${muted?I.mute:I.vol}</span>${muted?'קול':'השתק'}`);
+    $$('#feed video').forEach(x=>x.muted=muted);};
+  c.querySelector('.like').onclick=()=>doLike(c,l,false);
+  c.querySelector('.save').onclick=e=>{const on=!saved.has(l.id);on?saved.add(l.id):saved.delete(l.id);LS.set('saved',[...saved]);
+    e.currentTarget.classList.toggle('on',on);toast(on?'נשמר למועדפים':'הוסר מהמועדפים');};
+  c.querySelector('.share').onclick=()=>share(l);
 }
-async function doLike(c,l,fromDouble){
-  const btn = c.querySelector('.like');
-  if(fromDouble){ const h=c.querySelector('.bigheart'); h.classList.remove('pop'); void h.offsetWidth; h.classList.add('pop'); if(liked.has(l.id)) return; }
-  const on = !liked.has(l.id);
-  on ? liked.add(l.id) : liked.delete(l.id); LS.set('liked',[...liked]);
-  l.likes = Math.max(0,(l.likes||0) + (on?1:-1)); await store.update(l);
-  btn.classList.toggle('on',on); btn.querySelector('.n').textContent = fmt(l.likes);
+async function share(l){
+  const text=`${dealLabel(l)}: ${l.rooms} חד׳ ב${l.city}${l.area?', '+l.area:''} — ₪${fmt(l.price)} | דירהטוק`;
+  try{if(navigator.share){await navigator.share({title:'דירהטוק',text});return;}}catch{return;}
+  try{await navigator.clipboard.writeText(text);toast('הפרטים הועתקו');}catch{toast(text);}
+}
+async function doLike(c,l,dbl){
+  const btn=c.querySelector('.like');
+  if(dbl){const h=c.querySelector('.bigheart');h.classList.remove('pop');void h.offsetWidth;h.classList.add('pop');if(liked.has(l.id))return;}
+  const on=!liked.has(l.id);on?liked.add(l.id):liked.delete(l.id);LS.set('liked',[...liked]);
+  l.likes=Math.max(0,(l.likes||0)+(on?1:-1));await store.update(l);
+  btn.classList.toggle('on',on);btn.querySelector('.n').textContent=fmt(l.likes);
 }
 
-/* ---------- details sheet ---------- */
-function openSheet(id){ $('#backdrop').classList.add('open'); $(id).classList.add('open'); }
-function closeSheets(){ $('#backdrop').classList.remove('open'); document.querySelectorAll('.sheet').forEach(s=>s.classList.remove('open')); }
-$('#backdrop').onclick = closeSheets;
-function openDetails(l){
-  $('#detailBody').innerHTML = `
-    <h2>${esc(l.rooms)} חדרים ${dealLabel(l)} · ${esc(l.city)}</h2>
-    <div class="price" style="margin-bottom:12px">${priceHTML(l)}</div>
-    <div class="spec"><div><b>${esc(l.rooms)}</b><span>חדרים</span></div><div><b>${l.sqm?esc(l.sqm):'—'}</b><span>מ"ר</span></div><div><b>${l.floor!==''&&l.floor!=null?esc(l.floor):'—'}</b><span>קומה</span></div></div>
-    ${l.sqm&&l.deal==='sale'?`<p style="color:var(--muted);margin:0 0 12px;font-size:14px">₪${fmt(Math.round(l.price/l.sqm))} למ"ר</p>`:''}
-    <div class="loc" style="margin-bottom:10px">📍 ${esc(l.city)}${l.area?' · '+esc(l.area):''}</div>
-    ${(l.features||[]).length?`<div class="feat">${l.features.map(f=>`<span class="chip">${esc(f)}</span>`).join('')}</div>`:''}
-    ${l.desc?`<p style="line-height:1.6;white-space:pre-wrap;margin:0 0 14px">${esc(l.desc)}</p>`:''}
-    <p style="color:var(--muted);font-size:13px;margin:0 0 6px">מפרסם/ת: ${esc(l.name)} · פורסם ${new Date(l.created).toLocaleDateString('he-IL')}</p>
-    <div class="btns">
-      <a class="btn wa-btn" href="${waLink(l)}" target="_blank" rel="noopener">וואטסאפ</a>
-      <a class="btn ghost" href="tel:${esc(String(l.phone).replace(/[^\d+]/g,''))}">חיוג</a>
-    </div>`;
+/* ---------- sheets ---------- */
+function openSheet(id){$('#backdrop').classList.add('open');$(id).classList.add('open');}
+function closeSheets(){$('#backdrop').classList.remove('open');$$('.sheet').forEach(s=>s.classList.remove('open'));}
+$('#backdrop').onclick=closeSheets;$$('.sheet-x').forEach(b=>b.onclick=closeSheets);
+
+function openDetails(l,video){
+  const ch=(l.chapters||[]).slice().sort((a,b)=>a.t-b.t);
+  const ppm=l.sqm?Math.round(l.price/l.sqm):0;
+  $('#detailBody').innerHTML=`
+    <div class="badges" style="margin-bottom:10px"><span class="badge deal ${l.deal}">${dealLabel(l)}</span>${(l.owner||'private')==='private'?'<span class="badge priv">ללא תיווך</span>':'<span class="badge">תיווך</span>'}</div>
+    <div class="price num">${priceHTML(l)}</div>
+    <h2 style="margin-top:6px">${esc(l.rooms)} חדרים · ${loc(l)}</h2>
+    <div class="kv num">
+      <div><b>${esc(l.rooms)}</b><span>חדרים</span></div>
+      <div><b>${l.sqm?esc(l.sqm):'—'}</b><span>מ"ר</span></div>
+      <div><b>${l.floor!==''&&l.floor!=null?esc(l.floor):'—'}</b><span>קומה</span></div>
+      ${ppm?`<div><b>₪${fmt(ppm)}</b><span>${l.deal==='rent'?'למ"ר לחודש':'למ"ר'}</span></div>`:''}
+      ${l.entry?`<div><b style="font-size:15px">${esc(l.entry)}</b><span>כניסה</span></div>`:''}
+      <div><b>${fmt(l.views||0)}</b><span>צפיות</span></div>
+    </div>
+    ${ch.length&&video?`<div class="sec">קפיצה לחדר</div><div class="roomnav">${ch.map((x,i)=>`<button data-i="${i}">${esc(x.room)}<span class="t num">${mmss(x.t)}</span></button>`).join('')}</div>`:''}
+    ${(l.features||[]).length?`<div class="sec">מה יש בדירה</div><div class="chips">${l.features.map(f=>`<span class="chip">${esc(f)}</span>`).join('')}</div>`:''}
+    ${l.desc?`<div class="sec">על הדירה</div><p style="line-height:1.65;white-space:pre-wrap;margin:0;color:var(--ink)">${esc(l.desc)}</p>`:''}
+    <div class="poster"><div class="avatar">${esc((l.name||'?').trim()[0]||'?')}</div><div style="flex:1"><div class="pn">${esc(l.name)}</div><div class="ps">${(l.owner||'private')==='private'?'בעל/ת הדירה':'מתווך/ת'} · פורסם ${new Date(l.created).toLocaleDateString('he-IL')}</div></div></div>
+    <div class="btns"><a class="btn wa" href="${waVisit(l)}" target="_blank" rel="noopener">${I.wa}תיאום ביקור</a><a class="btn ghost" href="tel:${esc(String(l.phone).replace(/[^\d+]/g,''))}" aria-label="חיוג">${I.phone}</a></div>
+    <a class="btn ghost block" style="margin-top:10px" href="${waAsk(l)}" target="_blank" rel="noopener">שאלה על הדירה</a>
+    ${mine.has(l.id)?'':'<button class="linkbtn" id="reportBtn">דיווח: זו לא דירה / מודעה מטעה</button>'}`;
+  $$('#detailBody .roomnav button').forEach(b=>b.onclick=()=>{video.currentTime=ch[+b.dataset.i].t+0.01;video.play().catch(()=>{});closeSheets();});
+  $('#reportBtn')?.addEventListener('click',()=>{if(!confirm('לדווח על המודעה? היא תוסתר אצלך מיד.'))return;
+    reported.add(l.id);LS.set('reported',[...reported]);closeSheets();renderFeed();toast('תודה — המודעה דווחה');});
   openSheet('#detailSheet');
 }
 
 /* ---------- filters ---------- */
-function segInit(el, val, cb){
-  el.querySelectorAll('button').forEach(b=>{
-    b.classList.toggle('on', b.dataset.v===val);
-    b.onclick = ()=>{ el.querySelectorAll('button').forEach(x=>x.classList.remove('on')); b.classList.add('on'); cb&&cb(b.dataset.v); };
-  });
-}
-function syncFilterUI(){
-  segInit($('#fDeal'), filters.deal);
-  $('#fCity').value = filters.city; $('#fMax').value = filters.max; $('#fRooms').value = filters.rooms;
-}
-$('#openFilter').onclick = ()=>{ syncFilterUI(); openSheet('#filterSheet'); };
-$('#fApply').onclick = ()=>{
-  filters = { deal:$('#fDeal .on')?.dataset.v||'', city:$('#fCity').value.trim(), max:$('#fMax').value, rooms:$('#fRooms').value };
-  LS.set('filters',filters); closeSheets(); renderFeed(); $('#feed').scrollTop=0;
-};
-$('#fReset').onclick = ()=>{ filters={deal:'',city:'',max:'',rooms:''}; syncFilterUI(); };
+function segInit(el,val,cb){el.querySelectorAll('button').forEach(b=>{b.classList.toggle('on',b.dataset.v===val);
+  b.onclick=()=>{el.querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on');cb&&cb(b.dataset.v);};});}
+const segVal=el=>el.querySelector('.on')?.dataset.v||'';
+$('#fFeats').innerHTML=FEATURES.map(f=>`<button type="button" class="chip" data-f="${esc(f)}">${esc(f)}</button>`).join('');
+$('#fFeats').onclick=e=>{const b=e.target.closest('.chip');if(b)b.classList.toggle('on');};
+function syncFilterUI(){$('#fCity').value=filters.city;$('#fMax').value=filters.max;$('#fRooms').value=filters.rooms;segInit($('#fOwner'),filters.owner);
+  $$('#fFeats .chip').forEach(c=>c.classList.toggle('on',filters.feats.includes(c.dataset.f)));}
+$('#openFilter').onclick=()=>{syncFilterUI();openSheet('#filterSheet');};
+$('#fApply').onclick=()=>{filters={deal:filters.deal,city:$('#fCity').value.trim(),max:$('#fMax').value,rooms:$('#fRooms').value,owner:segVal($('#fOwner')),
+  feats:$$('#fFeats .chip.on').map(c=>c.dataset.f)};LS.set('filters',filters);closeSheets();renderFeed();$('#feed').scrollTop=0;};
+$('#fReset').onclick=()=>{filters={...EMPTY_F,deal:filters.deal};syncFilterUI();};
 
-/* ---------- grids (saved / mine) ---------- */
-function renderGrid(sel, items, deletable){
-  const el = $(sel);
+/* ---------- grids ---------- */
+function renderGrid(sel,items,mineMode){
+  const el=$(sel);
   if(!items.length){
-    el.innerHTML = `<div class="empty" style="height:auto;padding-top:60px">${ICON.house}<p>${deletable?'עוד לא העליתם דירות.':'עוד לא שמרתם דירות. לחצו על ⭐ בפיד כדי לשמור.'}</p>
-      ${deletable?'<button class="btn" data-up>העלאת דירה</button>':''}</div>`;
+    el.innerHTML=`<div class="empty" style="height:auto;padding-top:48px"><div class="art">${mineMode?I.house:I.save}</div>
+      <h2 style="font-size:19px">${mineMode?'עוד לא פרסמתם דירה':'עוד אין דירות שמורות'}</h2>
+      <p>${mineMode?'העלו סיור וידאו קצר והדירה תופיע בפיד.':'לחצו על סימן השמירה בפיד כדי לאסוף כאן דירות להשוואה.'}</p>
+      ${mineMode?'<button class="btn" data-up>העלאת דירה</button>':'<button class="btn ghost" data-feed>לפיד</button>'}</div>`;
     el.querySelector('[data-up]')?.addEventListener('click',()=>go('upload'));
+    el.querySelector('[data-feed]')?.addEventListener('click',()=>go('feed'));
     return;
   }
-  el.innerHTML = '<div class="grid"></div>'; const g = el.firstChild;
+  el.innerHTML='<div class="grid"></div>';const g=el.firstChild;
   for(const l of items){
-    const t = document.createElement('div'); t.className='thumb';
-    t.innerHTML = `<video muted playsinline preload="metadata"></video><div class="tp">₪${fmt(l.price)}</div>${deletable?`<button class="del" aria-label="מחיקה">${ICON.trash}</button>`:''}`;
-    videoURL(l.id).then(u=>{ if(u) t.querySelector('video').src = u+'#t=0.5'; });
-    t.onclick = e=>{
-      if(e.target.closest('.del')){
-        if(confirm('למחוק את המודעה?')){ store.remove(l.id).then(async()=>{ mine.delete(l.id); LS.set('mine',[...mine]); await load(); renderMine(); toast('המודעה נמחקה'); }); }
-        return;
-      }
-      openDetails(l);
+    const t=document.createElement('div');t.className='tile';
+    t.innerHTML=`<video muted playsinline preload="metadata"></video>
+      ${mineMode?`<span class="lk num">${I.heart}${fmt(l.likes||0)}</span><button class="del" aria-label="מחיקה">${I.trash}</button>`:''}
+      <div class="ov"><div class="tp num">₪${fmt(l.price)}</div><div class="ts">${esc(l.rooms)} חד׳ · ${esc(l.city)}</div></div>`;
+    videoURL(l.id).then(u=>{if(u)t.querySelector('video').src=u+'#t=0.8';});
+    t.onclick=e=>{
+      if(e.target.closest('.del')){if(confirm('למחוק את המודעה לצמיתות?'))store.remove(l.id).then(async()=>{mine.delete(l.id);LS.set('mine',[...mine]);await load();renderMine();toast('המודעה נמחקה');});return;}
+      openDetails(l,null);
     };
     g.appendChild(t);
   }
 }
 function renderMine(){
-  const my = listings.filter(l=>mine.has(l.id)).sort((a,b)=>b.created-a.created);
-  const me = LS.get('me',{});
-  $('#myName').textContent = me.name ? me.name : 'הדירות שלי';
-  $('#avatar').textContent = me.name ? me.name.trim()[0] : '🏠';
-  $('#stCount').textContent = my.length;
-  $('#stLikes').textContent = fmt(my.reduce((s,l)=>s+(l.likes||0),0));
-  renderGrid('#mineGrid', my, true);
+  const my=listings.filter(l=>mine.has(l.id)).sort((a,b)=>b.created-a.created),me=LS.get('me',{});
+  $('#myName').textContent=me.name||'אורח/ת';$('#avatar').textContent=(me.name||'?').trim()[0]||'?';
+  $('#stCount').textContent=my.length;$('#stLikes').textContent=fmt(my.reduce((s,l)=>s+(l.likes||0),0));
+  $('#stSaves').textContent=fmt(my.reduce((s,l)=>s+(l.views||0),0));
+  renderGrid('#mineGrid',my,true);
 }
 
-/* ---------- upload ---------- */
-let pickedFile = null, pickedDur = 0, deal = 'rent';
-const featSel = new Set();
-$('#cities').innerHTML = CITIES.map(c=>`<option value="${esc(c)}">`).join('');
-$('#featChips').innerHTML = FEATURES.map(f=>`<button type="button" class="chip" data-f="${esc(f)}">${esc(f)}</button>`).join('');
-$('#featChips').onclick = e=>{ const b=e.target.closest('.chip'); if(!b) return; const f=b.dataset.f; featSel.has(f)?featSel.delete(f):featSel.add(f); b.classList.toggle('on'); };
-segInit($('#dealSeg'), 'rent', v=>{ deal=v; $('#priceLbl').textContent = v==='rent'?'מחיר לחודש (₪) *':'מחיר מבוקש (₪) *'; });
-$('#drop').onclick = ()=>$('#fileIn').click();
-$('#fileIn').onchange = e=>pickVideo(e.target.files[0]);
-$('#clearVid').onclick = clearVideo;
-function prefillContact(){ const me = LS.get('me',{}); const f=$('#upForm'); if(me.name && !f.name.value) f.name.value=me.name; if(me.phone && !f.phone.value) f.phone.value=me.phone; }
-function clearVideo(){
-  pickedFile=null; pickedDur=0; const p=$('#preview'); if(p.src) URL.revokeObjectURL(p.src); p.removeAttribute('src'); p.load();
-  $('#previewWrap').classList.add('hidden'); $('#drop').classList.remove('hidden'); $('#fileIn').value='';
+/* ================= UPLOAD WIZARD ================= */
+const wiz={step:1,file:null,dur:0,url:'',chapters:[],deal:'rent',owner:'private',feats:new Set()};
+const TITLES={1:'הסרטון של הדירה',2:'סמנו את החדרים',3:'פרטי הדירה'};
+$('#cities').innerHTML=CITIES.map(c=>`<option value="${esc(c)}">`).join('');
+$('#featChips').innerHTML=FEATURES.map(f=>`<button type="button" class="chip" data-f="${esc(f)}">${esc(f)}</button>`).join('');
+$('#featChips').onclick=e=>{const b=e.target.closest('.chip');if(!b)return;const f=b.dataset.f;wiz.feats.has(f)?wiz.feats.delete(f):wiz.feats.add(f);b.classList.toggle('on');};
+$('#roomChips').innerHTML=ROOMS.map(r=>`<button type="button" class="chip" data-r="${esc(r)}">+ ${esc(r)}</button>`).join('');
+const setDeal=v=>{wiz.deal=v;$('#priceLbl').textContent=v==='rent'?'שכר דירה לחודש (₪)':'מחיר מבוקש (₪)';};
+segInit($('#dealSeg'),'rent',setDeal);segInit($('#ownerSeg'),'private',v=>wiz.owner=v);
+
+function wizShow(n){
+  wiz.step=n;$('#formErr').textContent='';
+  $$('#upPage .step').forEach(s=>s.classList.toggle('hidden',+s.dataset.step!==n));
+  $$('#upPage .steps span').forEach((s,i)=>s.classList.toggle('on',i<n));
+  $('#stepLbl').textContent=`שלב ${n} מתוך 3`;$('#stepTitle').textContent=TITLES[n];
+  $('#wizBack').classList.toggle('hidden',n===1);
+  const nb=$('#wizNext');
+  nb.textContent=n===3?'פרסום הדירה':n===2?(wiz.chapters.length?'המשך':'דילוג'):'המשך';
+  nb.disabled=n===1&&!wiz.file;
+  if(n===1&&wiz.file)$('#prev1').play().catch(()=>{});else $('#prev1').pause();
+  if(n===2){const v=$('#prev2');if(v.getAttribute('src')!==wiz.url)v.src=wiz.url;$('#scrub').max=wiz.dur||100;$('#tDur').textContent=mmss(wiz.dur);renderChapList();}
+  else $('#prev2').pause();
+  if(n===3){const me=LS.get('me',{}),f=$('#upForm');if(me.name&&!f.name.value)f.name.value=me.name;if(me.phone&&!f.phone.value)f.phone.value=me.phone;}
+  $('#upPage').scrollTop=0;
 }
+$('#wizBack').onclick=()=>wizShow(wiz.step-1);
+$('#upForm').addEventListener('input',()=>{$('#formErr').textContent='';});
+$('#wizNext').onclick=()=>{if(wiz.step<3)wizShow(wiz.step+1);else publish();};
+
+$('#drop').onclick=()=>$('#fileIn').click();
+$('#clearVid').onclick=()=>$('#fileIn').click();
+$('#fileIn').onchange=e=>pickVideo(e.target.files[0]);
 function pickVideo(file){
-  $('#vidErr').textContent='';
-  if(!file) return;
-  if(!file.type.startsWith('video/')){ $('#vidErr').textContent='אפשר להעלות רק קובצי וידאו.'; return; }
-  if(file.size > MAX_MB*1024*1024){ $('#vidErr').textContent=`הקובץ גדול מדי (מקסימום ${MAX_MB}MB).`; return; }
-  const url = URL.createObjectURL(file); const p = $('#preview');
-  p.onloadedmetadata = ()=>{
-    pickedDur = p.duration;
-    if(!isFinite(pickedDur) || pickedDur <= 0){ pickedDur = 0; }
-    if(pickedDur > MAX_SECONDS){ $('#vidErr').textContent=`הסרטון ארוך מדי (${Math.round(pickedDur)} שניות). מקסימום 3 דקות.`; clearVideo(); return; }
-    if(pickedDur && pickedDur < 3){ $('#vidErr').textContent='הסרטון קצר מדי — הראו את הדירה לפחות כמה שניות.'; clearVideo(); return; }
-    pickedFile = file;
-    $('#drop').classList.add('hidden'); $('#previewWrap').classList.remove('hidden');
+  $('#vidErr').textContent='';if(!file)return;
+  if(!file.type.startsWith('video/')){$('#vidErr').textContent='אפשר להעלות רק סרטוני וידאו של הדירה.';return;}
+  if(file.size>MAX_MB*1048576){$('#vidErr').textContent=`הקובץ גדול מדי (עד ${MAX_MB}MB).`;return;}
+  const url=URL.createObjectURL(file),probe=document.createElement('video');probe.preload='metadata';probe.muted=true;
+  probe.onloadedmetadata=()=>{
+    const d=isFinite(probe.duration)?probe.duration:0;
+    if(d>MAX_SECONDS){$('#vidErr').textContent=`הסרטון ארוך מדי (${mmss(d)}). עד 3 דקות.`;URL.revokeObjectURL(url);return;}
+    if(d&&d<MIN_SECONDS){$('#vidErr').textContent='הסרטון קצר מדי — הראו את הדירה לפחות כמה שניות.';URL.revokeObjectURL(url);return;}
+    if(wiz.url)URL.revokeObjectURL(wiz.url);
+    Object.assign(wiz,{file,dur:d,url,chapters:[]});
+    $('#prev1').src=url;$('#durLbl').textContent=mmss(d);
+    $('#drop').classList.add('hidden');$('#vp1').classList.remove('hidden');$('#wizNext').disabled=false;
   };
-  p.onerror = ()=>{ $('#vidErr').textContent='לא הצלחנו לקרוא את הסרטון. נסו קובץ MP4 / MOV.'; clearVideo(); };
-  p.src = url;
+  probe.onerror=()=>{$('#vidErr').textContent='לא הצלחנו לקרוא את הסרטון. נסו MP4 או MOV.';URL.revokeObjectURL(url);};
+  probe.src=url;$('#fileIn').value='';
 }
-$('#upForm').onsubmit = async e=>{
-  e.preventDefault(); $('#formErr').textContent='';
-  if(!pickedFile){ $('#vidErr').textContent='צריך לבחור סרטון של הדירה.'; $('#drop').scrollIntoView({behavior:'smooth',block:'center'}); return; }
-  const f = e.target, fd = Object.fromEntries(new FormData(f));
-  if(!$('#confirm').checked){ $('#formErr').textContent='יש לאשר שהסרטון מציג דירה.'; return; }
-  const btn = $('#publish'); btn.disabled = true; btn.textContent = 'מפרסם...';
-  const l = {
-    id: (crypto.randomUUID ? crypto.randomUUID() : Date.now()+'-'+Math.random().toString(36).slice(2)),
-    deal, city: fd.city.trim(), area: (fd.area||'').trim(), price: Number(fd.price), rooms: Number(fd.rooms),
-    sqm: fd.sqm ? Number(fd.sqm) : '', floor: fd.floor===''?'':Number(fd.floor), features:[...featSel],
-    desc: (fd.desc||'').trim(), name: fd.name.trim(), phone: fd.phone.trim(),
-    duration: Math.round(pickedDur), likes: 0, created: Date.now(),
-  };
+/* chapters */
+const v2=$('#prev2');
+$('#scrub').oninput=e=>{v2.currentTime=+e.target.value;$('#tNow').textContent=mmss(+e.target.value);};
+v2.ontimeupdate=()=>{$('#scrub').value=v2.currentTime;$('#tNow').textContent=mmss(v2.currentTime);};
+v2.onclick=()=>v2.paused?v2.play().catch(()=>{}):v2.pause();
+$('#roomChips').onclick=e=>{const b=e.target.closest('.chip');if(!b)return;
+  const t=Math.round(v2.currentTime*10)/10,room=b.dataset.r;
+  const same=wiz.chapters.findIndex(c=>Math.abs(c.t-t)<0.5);
+  if(same>=0)wiz.chapters[same].room=room;else wiz.chapters.push({t,room});
+  wiz.chapters.sort((a,b)=>a.t-b.t);renderChapList();
+  b.classList.add('on');setTimeout(()=>b.classList.remove('on'),300);
+  $('#wizNext').textContent='המשך';};
+function renderChapList(){
+  $('#chapList').innerHTML=wiz.chapters.length?wiz.chapters.map((c,i)=>`<div class="chaprow"><span class="t num">${mmss(c.t)}</span><span class="n">${esc(c.room)}</span><button type="button" data-i="${i}" aria-label="הסרה">${I.x}</button></div>`).join('')
+    :'<p class="hint" style="text-align:center;margin:8px 0 0">עוד לא סומנו חדרים. אפשר גם לדלג.</p>';
+  $$('#chapList button').forEach(b=>b.onclick=()=>{wiz.chapters.splice(+b.dataset.i,1);renderChapList();if(!wiz.chapters.length)$('#wizNext').textContent='דילוג';});
+  $$('#chapList .chaprow').forEach((r,i)=>r.querySelector('.n').onclick=()=>{v2.currentTime=wiz.chapters[i].t;});
+}
+/* publish */
+async function publish(){
+  const f=$('#upForm'),fd=Object.fromEntries(new FormData(f)),err=$('#formErr');err.textContent='';
+  const need=[['city','עיר'],['price','מחיר'],['rooms','מספר חדרים'],['name','שם'],['phone','טלפון']].filter(([k])=>!String(fd[k]||'').trim());
+  if(need.length){err.textContent='חסר: '+need.map(x=>x[1]).join(', ');f[need[0][0]].focus();return;}
+  if(!/^[0-9\-+ ]{9,15}$/.test(fd.phone.trim())){err.textContent='מספר הטלפון לא תקין.';f.phone.focus();return;}
+  if(!$('#confirm').checked){err.textContent='יש לאשר שהסרטון מציג דירה אמיתית.';return;}
+  const btn=$('#wizNext');btn.disabled=true;btn.textContent='מפרסם...';
+  let c=wiz.chapters.slice();if(c.length&&c[0].t>0.5)c.unshift({t:0,room:'פתיחה'});if(c.length)c[0].t=0;
+  const l={id:crypto.randomUUID?crypto.randomUUID():Date.now()+'-'+Math.random().toString(36).slice(2),
+    deal:wiz.deal,owner:wiz.owner,city:fd.city.trim(),area:(fd.area||'').trim(),price:Number(fd.price),rooms:Number(fd.rooms),
+    sqm:fd.sqm?Number(fd.sqm):'',floor:fd.floor===''?'':Number(fd.floor),entry:(fd.entry||'').trim(),features:[...wiz.feats],
+    desc:(fd.desc||'').trim(),name:fd.name.trim(),phone:fd.phone.trim(),chapters:c,duration:Math.round(wiz.dur*10)/10,
+    likes:0,views:0,created:Date.now()};
   try{
-    await store.put(l, pickedFile);
-    mine.add(l.id); LS.set('mine',[...mine]); LS.set('me',{name:l.name, phone:l.phone});
-    f.reset(); featSel.clear(); document.querySelectorAll('#featChips .chip').forEach(c=>c.classList.remove('on'));
-    deal='rent'; segInit($('#dealSeg'),'rent', v=>{ deal=v; $('#priceLbl').textContent = v==='rent'?'מחיר לחודש (₪) *':'מחיר מבוקש (₪) *'; });
-    $('#priceLbl').textContent='מחיר לחודש (₪) *'; clearVideo();
-    await load(); go('feed'); $('#feed').scrollTop = 0; toast('הדירה פורסמה! 🎉');
-  }catch(err){
-    $('#formErr').textContent = 'הפרסום נכשל — ייתכן שאין מספיק מקום באחסון. ' + (err?.message||'');
-  }finally{ btn.disabled=false; btn.textContent='פרסום הדירה'; }
-};
+    await store.put(l,wiz.file);
+    mine.add(l.id);LS.set('mine',[...mine]);LS.set('me',{name:l.name,phone:l.phone});
+    resetWizard();await load();filters.deal='';go('feed');renderFeed();$('#feed').scrollTop=0;toast('הדירה באוויר!');
+  }catch(e){err.textContent='הפרסום נכשל — ייתכן שאין מספיק מקום במכשיר.';btn.textContent='פרסום הדירה';}
+  finally{btn.disabled=false;}
+}
+function resetWizard(){
+  $('#upForm').reset();wiz.feats.clear();$$('#featChips .chip').forEach(c=>c.classList.remove('on'));
+  if(wiz.url)URL.revokeObjectURL(wiz.url);Object.assign(wiz,{file:null,dur:0,url:'',chapters:[],deal:'rent',owner:'private'});
+  segInit($('#dealSeg'),'rent',setDeal);setDeal('rent');segInit($('#ownerSeg'),'private',v=>wiz.owner=v);
+  $('#prev1').removeAttribute('src');$('#prev2').removeAttribute('src');$('#drop').classList.remove('hidden');$('#vp1').classList.add('hidden');
+  wiz.step=1;
+}
 
-/* ---------- boot ---------- */
-async function load(){ listings = await store.all(); renderFeed(); }
-document.addEventListener('visibilitychange',()=>{ if(document.hidden) pauseAll(); else if(current==='feed') playVisible(); });
+/* ================= BOOT ================= */
+async function load(){listings=await store.all();renderFeed();}
+document.addEventListener('visibilitychange',()=>{if(document.hidden)pauseAll();else if(current==='feed')playVisible();});
+if(!LS.get('onboarded',false)){$('#onb').classList.remove('hidden');}
+$('#onbGo').onclick=()=>{LS.set('onboarded',true);$('#onb').classList.add('hidden');playVisible();};
 load();
 })();
 </script>
