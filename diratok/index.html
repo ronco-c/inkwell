@@ -307,6 +307,15 @@
   nav .ndot{position:absolute;top:9px;left:calc(50% + 8px);width:8px;height:8px;border-radius:50%;background:var(--brand)}
   .role{font-size:13px;color:var(--muted);display:flex;align-items:center;gap:6px;margin-top:2px}
 
+  .ac-wrap{position:relative}
+  .ac{position:absolute;top:calc(100% + 4px);left:0;right:0;z-index:30;background:var(--surface-2);border:1px solid var(--line-2);border-radius:var(--r-sm);
+    max-height:280px;overflow-y:auto;box-shadow:0 14px 34px rgba(0,0,0,.55)}
+  .ac button{display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%;padding:13px 14px;font-size:15px;text-align:start;border-bottom:1px solid var(--line)}
+  .ac button:last-child{border-bottom:0}
+  .ac button:active{background:var(--line)}
+  .ac button small{color:var(--faint);font-size:12px;flex:none}
+  .ac button.rg{color:#ffb397;font-weight:700}
+
   /* ================= ONBOARDING ================= */
   .onb{position:absolute;inset:0;z-index:50;background:var(--bg);display:flex;flex-direction:column;padding:calc(30px + var(--safe-t)) 26px calc(26px + var(--safe-b))}
   .onb .mark{width:64px;height:64px;color:var(--brand)}
@@ -386,7 +395,7 @@
       <div class="field"><label>סוג עסקה</label>
         <div class="seg" id="dealSeg"><button type="button" data-v="rent" class="on">להשכרה</button><button type="button" data-v="sale">למכירה</button></div></div>
       <div class="row">
-        <div class="field"><label>עיר</label><input name="city" list="cities" placeholder="תל אביב"></div>
+        <div class="field"><label>עיר</label><input name="city" placeholder="התחילו להקליד..." autocomplete="off"></div>
         <div class="field"><label>שכונה / רחוב</label><input name="area" placeholder="פלורנטין"></div>
       </div>
       <div class="field"><label id="priceLbl">שכר דירה לחודש (₪)</label><input name="price" type="number" inputmode="numeric" min="1" placeholder="6,500"></div>
@@ -413,7 +422,7 @@
       <button class="btn ghost hidden" id="wizBack" type="button">חזרה</button>
       <button class="btn" id="wizNext" type="button" disabled>המשך</button>
     </div>
-    <datalist id="cities"></datalist>
+    
   </div>
 </section>
 
@@ -460,7 +469,8 @@
 <div class="sheet" id="detailSheet"><div class="grab"></div><button class="sheet-x" aria-label="סגירה"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button><div id="detailBody"></div></div>
 <div class="sheet" id="filterSheet"><div class="grab"></div><button class="sheet-x" aria-label="סגירה"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
   <h2 style="margin-bottom:18px">מה אתם מחפשים?</h2>
-  <div class="field"><label>עיר</label><input id="fCity" list="cities" placeholder="כל הארץ"></div>
+  <div class="field"><label>אזור</label><div class="chips" id="fRegion"></div></div>
+  <div class="field"><label>עיר</label><input id="fCity" placeholder="עיר או אזור — למשל &quot;צפון&quot;" autocomplete="off"></div>
   <div class="row">
     <div class="field"><label>מחיר עד (₪)</label><input id="fMax" type="number" inputmode="numeric" placeholder="ללא הגבלה"></div>
     <div class="field"><label>מינימום חדרים</label><select id="fRooms"><option value="">הכל</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select></div>
@@ -498,7 +508,20 @@
 const DB_NAME='diratok', DB_VER=1, MAX_SECONDS=180, MIN_SECONDS=3, MAX_MB=300;
 const FEATURES=['מרפסת','חניה','ממ"ד','מעלית','מזגן','מרוהטת','חיות מחמד','משופצת','מחסן','נגישות'];
 const ROOMS=['כניסה','סלון','מטבח','חדר שינה','חדר ילדים','חדר עבודה','חדר רחצה','מרפסת','נוף','חצר','בניין'];
-const CITIES=['תל אביב','ירושלים','חיפה','באר שבע','רמת גן','גבעתיים','הרצליה','רעננה','כפר סבא','פתח תקווה','ראשון לציון','חולון','בת ים','נתניה','אשדוד','רחובות','מודיעין','הוד השרון','חדרה','אילת'];
+const REGIONS={
+  'צפון':['נהריה','עכו','כרמיאל','מעלות-תרשיחא','צפת','טבריה','קריית שמונה','נצרת','נוף הגליל','עפולה','בית שאן','מגדל העמק','יקנעם עילית','ראש פינה','קצרין','שלומי','סח\'נין','שפרעם','טמרה','מגאר','כפר ורדים','רמת ישי','קריית טבעון','מטולה'],
+  'חיפה והקריות':['חיפה','קריית אתא','קריית ביאליק','קריית מוצקין','קריית ים','נשר','טירת כרמל','עתלית','דלית אל-כרמל','עוספיא'],
+  'שרון':['נתניה','הרצליה','רעננה','כפר סבא','הוד השרון','רמת השרון','חדרה','פרדס חנה-כרכור','זכרון יעקב','בנימינה-גבעת עדה','קיסריה','אור עקיבא','אבן יהודה','כפר יונה','קדימה-צורן','תל מונד','טייבה','טירה','פרדסיה','צור יצחק'],
+  'מרכז':['תל אביב-יפו','רמת גן','גבעתיים','בני ברק','חולון','בת ים','פתח תקווה','ראש העין','אור יהודה','יהוד-מונוסון','קריית אונו','גבעת שמואל','גני תקווה','סביון','אלעד','ראשון לציון','אזור','שוהם','לוד','רמלה','מודיעין-מכבים-רעות','כפר קאסם','באר יעקב'],
+  'שפלה':['רחובות','נס ציונה','יבנה','גדרה','גן יבנה','קריית עקרון','מזכרת בתיה','בני עי"ש','כפר חב"ד'],
+  'ירושלים והסביבה':['ירושלים','בית שמש','מבשרת ציון','מעלה אדומים','גבעת זאב','אבו גוש','צור הדסה','מוצא עילית'],
+  'דרום':['באר שבע','אשדוד','אשקלון','קריית גת','קריית מלאכי','שדרות','נתיבות','אופקים','דימונה','ירוחם','ערד','מצפה רמון','אילת','רהט','עומר','להבים','מיתר','באר יעקב'],
+  'יהודה ושומרון':['אריאל','ביתר עילית','מודיעין עילית','אפרת','קרני שומרון','עמנואל','אלפי מנשה','אורנית','קריית ארבע','מעלה אפרים','קדומים','אלקנה'],
+};
+const CITY_REGION={};for(const[r,cs]of Object.entries(REGIONS))cs.forEach(c=>{if(!CITY_REGION[c])CITY_REGION[c]=r;});
+const ALL_CITIES=Object.keys(CITY_REGION);
+const normHe=s=>String(s||'').replace(/[-־'"׳״]/g,' ').replace(/\s+/g,' ').trim();
+function regionOf(city){const c=normHe(city);if(!c)return '';const k=ALL_CITIES.find(x=>normHe(x)===c)||ALL_CITIES.find(x=>normHe(x).startsWith(c)||c.startsWith(normHe(x)));return k?CITY_REGION[k]:'';}
 
 /* ---------- Business settings ----------
    BUSINESS_WHATSAPP: your business number (e.g. '972501234567'). When set, every lead
@@ -529,18 +552,29 @@ const dbp=openDB();
 async function tx(stores,mode,fn){const db=await dbp;return new Promise((res,rej)=>{const t=db.transaction(stores,mode);let out;
   Promise.resolve(fn(t)).then(v=>out=v);t.oncomplete=()=>res(out);t.onerror=()=>rej(t.error);t.onabort=()=>rej(t.error);});}
 const reqP=r=>new Promise((res,rej)=>{r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});
+/* In-memory fallback: some browsers (e.g. iOS Safari in private mode / embedded pages)
+   refuse to store video files. Then the listing lives for the current session only. */
+const mem={listings:new Map(),videos:new Map()};
 const store={
-  all:()=>tx(['listings'],'readonly',t=>reqP(t.objectStore('listings').getAll())),
-  put:(l,blob)=>tx(['listings','videos'],'readwrite',t=>{t.objectStore('listings').put(l);if(blob)t.objectStore('videos').put(blob,l.id);}),
-  update:l=>tx(['listings'],'readwrite',t=>{t.objectStore('listings').put(l);}),
-  video:id=>tx(['videos'],'readonly',t=>reqP(t.objectStore('videos').get(id))),
-  remove:id=>tx(['listings','videos'],'readwrite',t=>{t.objectStore('listings').delete(id);t.objectStore('videos').delete(id);}),
+  async all(){let a=[];try{a=await tx(['listings'],'readonly',t=>reqP(t.objectStore('listings').getAll()));}catch{}
+    return [...a.filter(x=>!mem.listings.has(x.id)),...mem.listings.values()];},
+  async put(l,blob){
+    try{await tx(['listings','videos'],'readwrite',t=>{t.objectStore('listings').put(l);if(blob)t.objectStore('videos').put(blob,l.id);});return 'db';}catch(e1){}
+    try{const rec=blob?{buf:await blob.arrayBuffer(),type:blob.type||'video/mp4'}:null; /* WebKit workaround: store bytes, not the File */
+      await tx(['listings','videos'],'readwrite',t=>{t.objectStore('listings').put(l);if(rec)t.objectStore('videos').put(rec,l.id);});return 'db';}catch(e2){}
+    mem.listings.set(l.id,l);if(blob)mem.videos.set(l.id,blob);return 'mem';},
+  update:l=>mem.listings.has(l.id)?Promise.resolve():tx(['listings'],'readwrite',t=>{t.objectStore('listings').put(l);}).catch(()=>{}),
+  async video(id){if(mem.videos.has(id))return mem.videos.get(id);
+    const v=await tx(['videos'],'readonly',t=>reqP(t.objectStore('videos').get(id))).catch(()=>null);
+    return v&&v.buf?new Blob([v.buf],{type:v.type}):v;},
+  async remove(id){mem.listings.delete(id);mem.videos.delete(id);
+    await tx(['listings','videos'],'readwrite',t=>{t.objectStore('listings').delete(id);t.objectStore('videos').delete(id);}).catch(()=>{});},
 };
 const LS={get(k,d){try{const v=localStorage.getItem('dt_'+k);return v==null?d:JSON.parse(v);}catch{return d;}},
           set(k,v){try{localStorage.setItem('dt_'+k,JSON.stringify(v));}catch{}}};
 
 let liked=new Set(LS.get('liked',[])), saved=new Set(LS.get('saved',[])), mine=new Set(LS.get('mine',[])), reported=new Set(LS.get('reported',[]));
-const EMPTY_F={deal:'',city:'',max:'',rooms:'',feats:[],owner:''};
+const EMPTY_F={deal:'',region:'',city:'',max:'',rooms:'',feats:[],owner:''};
 let filters={...EMPTY_F,...LS.get('filters',{})};
 let muted=true, listings=[], current='feed';
 
@@ -594,14 +628,15 @@ const matches=l=>matchF(l,filters);
 function matchF(l,f){
   if(reported.has(l.id))return false;
   if(f.deal&&l.deal!==f.deal)return false;
-  if(f.city&&!l.city.includes(f.city.trim()))return false;
+  if(f.region&&(l.region||regionOf(l.city))!==f.region)return false;
+  if(f.city&&!normHe(l.city).includes(normHe(f.city)))return false;
   if(f.max&&Number(l.price)>Number(f.max))return false;
   if(f.rooms&&Number(l.rooms)<Number(f.rooms))return false;
   if(f.owner&&(l.owner||'private')!==f.owner)return false;
   if(f.feats.length&&!f.feats.every(x=>(l.features||[]).includes(x)))return false;
   return true;
 }
-const filtersActive=()=>!!(filters.city||filters.max||filters.rooms||filters.owner||filters.feats.length);
+const filtersActive=()=>!!(filters.region||filters.city||filters.max||filters.rooms||filters.owner||filters.feats.length);
 
 const io=new IntersectionObserver(es=>{es.forEach(e=>{
   const v=e.target.querySelector('video');if(!v)return;
@@ -774,11 +809,17 @@ function segInit(el,val,cb){el.querySelectorAll('button').forEach(b=>{b.classLis
 const segVal=el=>el.querySelector('.on')?.dataset.v||'';
 $('#fFeats').innerHTML=FEATURES.map(f=>`<button type="button" class="chip" data-f="${esc(f)}">${esc(f)}</button>`).join('');
 $('#fFeats').onclick=e=>{const b=e.target.closest('.chip');if(b)b.classList.toggle('on');};
-function syncFilterUI(){$('#fCity').value=filters.city;$('#fMax').value=filters.max;$('#fRooms').value=filters.rooms;segInit($('#fOwner'),filters.owner);
+function syncFilterUI(){$('#fCity').value=filters.city;$$('#fRegion .chip').forEach(c=>c.classList.toggle('on',c.dataset.r===filters.region));$('#fMax').value=filters.max;$('#fRooms').value=filters.rooms;segInit($('#fOwner'),filters.owner);
   $$('#fFeats .chip').forEach(c=>c.classList.toggle('on',filters.feats.includes(c.dataset.f)));}
 $('#openFilter').onclick=()=>{syncFilterUI();openSheet('#filterSheet');};
-$('#fApply').onclick=()=>{filters={deal:filters.deal,city:$('#fCity').value.trim(),max:$('#fMax').value,rooms:$('#fRooms').value,owner:segVal($('#fOwner')),
-  feats:$$('#fFeats .chip.on').map(c=>c.dataset.f)};LS.set('filters',filters);closeSheets();renderFeed();$('#feed').scrollTop=0;};
+function readF(){let city=$('#fCity').value.trim(),region=$('#fRegion .chip.on')?.dataset.r||'';
+  const asReg=Object.keys(REGIONS).find(r=>normHe(city)===normHe(r)||normHe(city)===normHe('אזור '+r));if(asReg){region=asReg;city='';}
+  if(city&&region&&regionOf(city)&&regionOf(city)!==region)region='';
+  return {deal:filters.deal,region,city,max:$('#fMax').value,rooms:$('#fRooms').value,owner:segVal($('#fOwner')),feats:$$('#fFeats .chip.on').map(c=>c.dataset.f)};}
+$('#fRegion').innerHTML=Object.keys(REGIONS).map(r=>`<button type="button" class="chip" data-r="${esc(r)}">${esc(r)}</button>`).join('');
+$('#fRegion').onclick=e=>{const b=e.target.closest('.chip');if(!b)return;const on=!b.classList.contains('on');$$('#fRegion .chip').forEach(c=>c.classList.remove('on'));if(on){b.classList.add('on');
+  const c=$('#fCity').value.trim();if(c&&regionOf(c)!==b.dataset.r)$('#fCity').value='';}};
+$('#fApply').onclick=()=>{filters=readF();LS.set('filters',filters);closeSheets();renderFeed();$('#feed').scrollTop=0;};
 $('#fReset').onclick=()=>{filters={...EMPTY_F,deal:filters.deal};syncFilterUI();};
 
 /* ---------- grids ---------- */
@@ -992,11 +1033,11 @@ function openLead(type,l){
 document.addEventListener('click',e=>{const b=e.target.closest('[data-lead]');if(b&&!b.closest('#detailBody'))openLead(b.dataset.lead,null);});
 
 /* ----- saved searches + new-listing alerts ----- */
-function describeF(f){const p=[];if(f.deal)p.push(f.deal==='rent'?'להשכרה':'למכירה');p.push(f.city||'כל הארץ');if(f.rooms)p.push(f.rooms+'+ חד׳');
+function describeF(f){const p=[];if(f.deal)p.push(f.deal==='rent'?'להשכרה':'למכירה');p.push(f.city||(f.region?'אזור '+f.region:'כל הארץ'));if(f.rooms)p.push(f.rooms+'+ חד׳');
   if(f.max)p.push('עד ₪'+fmt(f.max));if(f.owner==='private')p.push('ללא תיווך');if(f.feats?.length)p.push(f.feats.join(', '));return p.join(' · ');}
 const newFor=s=>listings.filter(l=>l.created>s.seen&&!mine.has(l.id)&&matchF(l,{...EMPTY_F,...s.f})).length;
 $('#fSave').onclick=()=>{
-  const f={deal:filters.deal,city:$('#fCity').value.trim(),max:$('#fMax').value,rooms:$('#fRooms').value,owner:segVal($('#fOwner')),feats:$$('#fFeats .chip.on').map(c=>c.dataset.f)};
+  const f=readF();
   const ss=LS.get('searches',[]);ss.unshift({id:Date.now(),f,seen:Date.now()});LS.set('searches',ss.slice(0,10));
   filters=f;LS.set('filters',f);closeSheets();renderFeed();toast('החיפוש נשמר — נעדכן על דירות חדשות');
 };
@@ -1016,7 +1057,6 @@ function checkAlerts(){const n=LS.get('searches',[]).reduce((s,x)=>s+newFor(x),0
 /* ================= UPLOAD WIZARD ================= */
 const wiz={step:1,file:null,dur:0,url:'',chapters:[],deal:'rent',owner:defOwner(),feats:new Set()};
 const TITLES={1:'הסרטון של הדירה',2:'סמנו את החדרים',3:'פרטי הדירה'};
-$('#cities').innerHTML=CITIES.map(c=>`<option value="${esc(c)}">`).join('');
 $('#featChips').innerHTML=FEATURES.map(f=>`<button type="button" class="chip" data-f="${esc(f)}">${esc(f)}</button>`).join('');
 $('#featChips').onclick=e=>{const b=e.target.closest('.chip');if(!b)return;const f=b.dataset.f;wiz.feats.has(f)?wiz.feats.delete(f):wiz.feats.add(f);b.classList.toggle('on');};
 $('#roomChips').innerHTML=ROOMS.map(r=>`<button type="button" class="chip" data-r="${esc(r)}">+ ${esc(r)}</button>`).join('');
@@ -1097,10 +1137,12 @@ async function publish(){
   const me=getMe();
   if(l.owner==='agent'&&me.role==='agent'){l.agency=me.agency||'';l.plan=me.plan;l.verified=me.plan==='pro'||me.plan==='office';}
   try{
-    await store.put(l,wiz.file);
+    l.region=regionOf(l.city);
+    const where=await store.put(l,wiz.file);
     mine.add(l.id);LS.set('mine',[...mine]);setMe({name:me.name||l.name,phone:me.phone||l.phone});
-    resetWizard();await load();filters.deal='';go('feed');renderFeed();$('#feed').scrollTop=0;toast('הדירה באוויר!');
-  }catch(e){err.textContent='הפרסום נכשל — ייתכן שאין מספיק מקום במכשיר.';btn.textContent='פרסום הדירה';}
+    resetWizard();await load();filters={...EMPTY_F};LS.set('filters',filters);go('feed');renderFeed();$('#feed').scrollTop=0;
+    toast(where==='mem'?'הדירה פורסמה (שמורה עד סגירת הדף)':'הדירה באוויר!');
+  }catch(e){err.textContent='הפרסום נכשל: '+(e&&e.message||e);btn.textContent='פרסום הדירה';}
   finally{btn.disabled=false;}
 }
 function resetWizard(){
@@ -1110,6 +1152,34 @@ function resetWizard(){
   $('#prev1').removeAttribute('src');$('#prev2').removeAttribute('src');$('#drop').classList.remove('hidden');$('#vp1').classList.add('hidden');
   wiz.step=1;
 }
+
+/* ================= CITY / REGION AUTOCOMPLETE ================= */
+function attachAC(inp,opt={}){
+  const wrap=inp.parentElement;wrap.classList.add('ac-wrap');
+  const box=document.createElement('div');box.className='ac hidden';wrap.appendChild(box);
+  const hide=()=>box.classList.add('hidden');
+  const score=(name,q)=>{const n=normHe(name);return n.startsWith(q)?0:n.split(' ').some(w=>w.startsWith(q))?1:-1;};
+  const show=()=>{
+    const q=normHe(inp.value);if(!q){hide();return;}
+    let items=[];
+    if(opt.regions)for(const r of Object.keys(REGIONS)){const sc=Math.max(score(r,q),score('אזור '+r,q)>=0?0:-1);if(sc>=0)items.push({r:1,v:r,s:sc-.5});}
+    for(const c of ALL_CITIES){const sc=score(c,q);if(sc>=0)items.push({v:c,s:sc});}
+    items.sort((a,b)=>a.s-b.s||a.v.localeCompare(b.v,'he'));items=items.slice(0,8);
+    if(!items.length||(items.length===1&&normHe(items[0].v)===q)){hide();return;}
+    box.innerHTML=items.map(i=>i.r?`<button type="button" class="rg" data-r="${esc(i.v)}"><span>📍 כל אזור ${esc(i.v)}</span><small>${REGIONS[i.v].length} ערים</small></button>`
+      :`<button type="button" data-c="${esc(i.v)}"><span>${esc(i.v)}</span><small>${esc(CITY_REGION[i.v])}</small></button>`).join('');
+    box.classList.remove('hidden');
+  };
+  box.addEventListener('pointerdown',e=>e.preventDefault());
+  box.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
+    if(b.dataset.r){inp.value='';opt.onRegion&&opt.onRegion(b.dataset.r);}else{inp.value=b.dataset.c;opt.onCity&&opt.onCity(b.dataset.c);}
+    hide();inp.dispatchEvent(new Event('input',{bubbles:true}));hide();});
+  inp.addEventListener('input',show);inp.addEventListener('focus',show);inp.addEventListener('blur',()=>setTimeout(hide,120));
+}
+attachAC($('#upForm [name=city]'));
+attachAC($('#fCity'),{regions:true,
+  onRegion:r=>{$$('#fRegion .chip').forEach(c=>c.classList.toggle('on',c.dataset.r===r));},
+  onCity:c=>{const r=regionOf(c);$$('#fRegion .chip').forEach(x=>x.classList.toggle('on',x.dataset.r===r&&x.classList.contains('on')));}});
 
 /* ================= BOOT ================= */
 async function load(){listings=await store.all();renderFeed();}
