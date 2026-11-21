@@ -419,7 +419,7 @@
         <div class="field"><label>שם</label><input name="name" placeholder="דני"></div>
         <div class="field"><label>טלפון</label><input name="phone" type="tel" inputmode="tel" placeholder="050-0000000"></div>
       </div>
-      <label class="check"><input type="checkbox" id="confirm"> אני מאשר/ת שהסרטון מציג דירה אמיתית שמוצעת כרגע, ושיש לי זכות לפרסם אותו.</label>
+      <label class="check"><input type="checkbox" id="confirm"> אני מאשר שהסרטון מציג נכס קיים ושיש לי הרשאה לפרסמו.</label>
     </form>
 
     <div class="err" id="formErr"></div>
@@ -491,8 +491,8 @@
 <!-- ============ ONBOARDING ============ -->
 <div class="onb hidden" id="onb">
   <div class="brand"><svg class="mark" viewBox="0 0 64 64" fill="none"><path d="M8 29L32 9l24 20v24a3 3 0 01-3 3H11a3 3 0 01-3-3z" fill="currentColor"/><path d="M27 26v18l15-9z" fill="#fff"/></svg><span class="wordmark">tourhome<i>.</i></span></div>
-  <h1>דירות, כמו<br>שהן <em>באמת</em>.</h1>
-  <p class="lead">בלי תמונות מטעות וזוויות רחבות. סיור וידאו קצר בכל דירה — וגוללים לבאה.</p>
+  <h1>כל דירה.<br><em>בסיור אחד.</em></h1>
+  <p class="lead">סיורי וידאו קצרים בדירות להשכרה ולמכירה.</p>
   <div class="pts">
     <div class="pt"><span class="ri"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M7 4v16M17 4v16M3 12h18"/></svg></span><div><b>קופצים ישר לחדר</b><span>מטבח? מרפסת? כל סרטון מחולק לחדרים.</span></div></div>
     <div class="pt"><span class="ri"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7.5-4.6-9.6-9.2C.9 8.5 3 4.5 6.8 4.5c2.2 0 3.6 1.2 5.2 3 1.6-1.8 3-3 5.2-3 3.8 0 5.9 4 4.4 7.3C19.5 16.4 12 21 12 21z"/></svg></span><div><b>שומרים מה שאהבתם</b><span>ומשווים בשקט אחר כך.</span></div></div>
@@ -525,6 +525,7 @@ const REGIONS={
 };
 const CITY_REGION={};for(const[r,cs]of Object.entries(REGIONS))cs.forEach(c=>{if(!CITY_REGION[c])CITY_REGION[c]=r;});
 const ALL_CITIES=Object.keys(CITY_REGION);
+const regionLabel=r=>['צפון','מרכז','דרום','שרון','שפלה'].includes(r)?'אזור ה'+r:'אזור '+r;
 const normHe=s=>String(s||'').replace(/[-־'"׳״]/g,' ').replace(/\s+/g,' ').trim();
 function regionOf(city){const c=normHe(city);if(!c)return '';const k=ALL_CITIES.find(x=>normHe(x)===c)||ALL_CITIES.find(x=>normHe(x).startsWith(c)||c.startsWith(normHe(x)));return k?CITY_REGION[k]:'';}
 
@@ -667,8 +668,8 @@ function renderFeed(){
   if(!items.length){
     const narrowed=filtersActive()||filters.deal;
     feed.innerHTML=`<div class="empty"><div class="art">${I.house}</div>
-      <h2>${narrowed?'אין התאמות כרגע':'הפיד מחכה לדירה הראשונה'}</h2>
-      <p>${narrowed?'נסו להרחיב את החיפוש — עיר, מחיר או מספר חדרים.':'יש לכם דירה להשכרה או למכירה? סיור וידאו של חצי דקה שווה יותר מעשרים תמונות.'}</p>
+      <h2>${narrowed?'אין התאמות כרגע':'עדיין אין נכסים'}</h2>
+      <p>${narrowed?'נסו להרחיב את החיפוש — עיר, מחיר או מספר חדרים.':'פרסמו סיור וידאו ראשון.'}</p>
       ${narrowed?'<button class="btn ghost" id="emptyReset">ניקוי סינון</button>':'<button class="btn" id="emptyUp">העלאת דירה</button>'}</div>`;
     $('#emptyUp')?.addEventListener('click',()=>go('upload'));
     $('#emptyReset')?.addEventListener('click',()=>{filters={...EMPTY_F};LS.set('filters',filters);renderFeed();});
@@ -791,9 +792,9 @@ function openDetails(l,video){
       <div class="calc"><div class="hint">החזר חודשי משוער</div><div class="res num" id="mRes"></div>
         <div class="cr"><span>הון עצמי</span><span class="num" id="mDownL"></span></div><input type="range" id="mDown" min="25" max="75" step="5" value="30">
         <div class="cr"><span>תקופה</span><span class="num" id="mYearsL"></span></div><input type="range" id="mYears" min="10" max="30" step="5" value="25">
-        <button class="btn block" data-lead="mortgage" style="margin-top:12px">קבלו הצעת משכנתא — חינם</button>
+        <button class="btn block" data-lead="mortgage" style="margin-top:12px">בדיקת הצעות משכנתא</button>
         <div class="note">חישוב לפי ריבית ממוצעת של ${(MORT_RATE*100).toFixed(1)}%. הערכה בלבד, לא ייעוץ.</div></div>`
-    :`<div class="sec">עוברים לדירה? נסדר לכם</div>
+    :`<div class="sec">שירותים למעבר</div>
       <div class="svc"><button data-lead="moving">${I.truck}הובלה</button><button data-lead="insurance">${I.shield}ביטוח דירה</button><button data-lead="cleaning">${I.spark}ניקיון</button></div>`}
     ${mine.has(l.id)?'':'<button class="linkbtn" id="reportBtn">דיווח: זו לא דירה / מודעה מטעה</button>'}`;
   $$('#detailBody [data-wa]').forEach(a=>a.addEventListener('click',()=>bump(l,'wa')));
@@ -954,7 +955,7 @@ function openPlans(){
     <div class="row"><div class="field"><label>שם מלא</label><input id="pName" value="${esc(me.name||'')}"></div><div class="field"><label>טלפון</label><input id="pPhone" type="tel" inputmode="tel" value="${esc(me.phone||'')}"></div></div>
     <div class="row"><div class="field"><label>משרד / סוכנות</label><input id="pAgency" value="${esc(me.agency||'')}" placeholder="עצמאי/ת"></div><div class="field"><label>אזורי פעילות</label><input id="pCities" value="${esc(me.cities||'')}" placeholder="תל אביב, רמת גן"></div></div>
     <div class="err" id="pErr" style="margin:0 0 14px"></div>
-    ${PLANS.map(p=>`<div class="plan${p.hot?' hot':''}">${p.hot?'<span class="tagx">הכי פופולרי</span>':''}<div class="ph"><span class="pn">${p.name}</span><span class="pp num">₪${p.price}<small> / חודש</small></span></div>
+    ${PLANS.map(p=>`<div class="plan${p.hot?' hot':''}">${p.hot?'<span class="tagx">מומלץ</span>':''}<div class="ph"><span class="pn">${p.name}</span><span class="pp num">₪${p.price}<small> / חודש</small></span></div>
       <ul>${p.feats.map(f=>`<li>${esc(f)}</li>`).join('')}</ul><button class="btn block ${p.hot?'':'ghost'}" data-plan="${p.id}">${me.plan===p.id?'✓ המסלול הנוכחי':'30 יום חינם'}</button></div>`).join('')}
     <div class="note">לאחר תקופת הניסיון: חיוב חודשי, ביטול בכל עת.<br>(סליקת אשראי תחובר בהשקה)</div>`;
   $$('#genBody [data-plan]').forEach(b=>b.onclick=()=>{
@@ -964,7 +965,7 @@ function openPlans(){
     setMe({name,phone,agency:$('#pAgency').value.trim(),cities:$('#pCities').value.trim(),role:'agent',plan,planStart:getMe().planStart||Date.now()});
     wiz.owner='agent';
     const m=getMe();listings.filter(l=>mine.has(l.id)&&l.owner==='agent').forEach(l=>{l.agency=m.agency;l.plan=m.plan;l.verified=isPro();store.update(l);});
-    closeSheets();toast(`מסלול ${PLANS.find(p=>p.id===plan).name} פעיל — ברוכים הבאים!`);
+    closeSheets();toast(`המסלול הופעל`);
     renderFeed();if(current==='mine')renderMine();if(current==='agents')renderAgents();
   });
   openSheet('#genSheet');
@@ -975,7 +976,7 @@ function boostsLeft(){const me=getMe(),m=new Date().toISOString().slice(0,7);con
 function openBoost(l){
   let sel=1;const free=boostsLeft();
   const draw=()=>{
-    $('#genBody').innerHTML=`<div class="eyebrow">קידום מודעה</div><h2>יותר עיניים על הדירה</h2>
+    $('#genBody').innerHTML=`<div class="eyebrow">TourHome Business</div><h2>קידום מודעה</h2>
       <p class="hint" style="margin:6px 0 16px">מודעה מקודמת מופיעה ראשונה בפיד עם תג "מקודם".${isBoosted(l)?` <b style="color:var(--ink)">פעיל עד ${new Date(l.boostUntil).toLocaleDateString('he-IL')}</b> — הקידום יתווסף לזמן שנותר.`:''}</p>
       ${BOOSTS.map((b,i)=>`<button class="opt${i===sel?' on':''}" data-i="${i}"><div>${b.n}<small>${b.hot?'הכי משתלם · ':''}₪${(b.price/b.d).toFixed(1)} ליום</small></div><span class="pr num">₪${b.price}</span></button>`).join('')}
       ${free?`<div class="insight">כלול במנוי שלך: נשארו ${free} קידומים חינם החודש.</div>`:''}
@@ -996,7 +997,7 @@ function openStats(l){
   const roomsHTML=!hasCh?'<p class="hint">בסרטון הזה לא סומנו חדרים. בהעלאה הבאה סמנו חדרים כדי לראות איפה הצופים מתעכבים.</p>'
     :!rooms.length?'<p class="hint">עוד אין מספיק צפיות כדי להציג נתונים לפי חדר.</p>'
     :`<div class="bars">${rooms.map(([r,v])=>`<div class="bar"><span>${esc(r)}</span><span class="tr"><i style="width:${v/max*100}%"></i></span><span class="v num">${per(v).toFixed(1)}s</span></div>`).join('')}</div>
-      <div class="insight">הצופים מתעכבים הכי הרבה ב<b>${esc(rooms[0][0])}</b>${rooms.length>1?` ומקדישים הכי מעט זמן ל<b>${esc(rooms.at(-1)[0])}</b>. כדאי לפתוח את הסרטון ב${esc(rooms[0][0])} — שם נמצא ה"וואו".`:'.'}</div>`;
+      <div class="insight">הצופים מתעכבים הכי הרבה ב<b>${esc(rooms[0][0])}</b>${rooms.length>1?` ומקדישים הכי מעט זמן ל<b>${esc(rooms.at(-1)[0])}</b>. מומלץ לפתוח את הסרטון ב${esc(rooms[0][0])}.`:'.'}</div>`;
   const conv=views?Math.round((s.wa||0)/views*1000)/10:0;
   $('#genBody').innerHTML=`<div class="eyebrow">סטטיסטיקה</div><h2>${esc(l.rooms)} חד׳ · ${loc(l)}</h2>
     <div class="kv num"><div><b>${fmt(views)}</b><span>צפיות</span></div><div><b>${fmt(l.likes||0)}</b><span>לייקים</span></div><div><b>${fmt(s.saves||0)}</b><span>שמירות</span></div>
@@ -1038,7 +1039,7 @@ function openLead(type,l){
 document.addEventListener('click',e=>{const b=e.target.closest('[data-lead]');if(b&&!b.closest('#detailBody'))openLead(b.dataset.lead,null);});
 
 /* ----- saved searches + new-listing alerts ----- */
-function describeF(f){const p=[];if(f.deal)p.push(f.deal==='rent'?'להשכרה':'למכירה');p.push(f.city||(f.region?'אזור '+f.region:'כל הארץ'));if(f.rooms)p.push(f.rooms+'+ חד׳');
+function describeF(f){const p=[];if(f.deal)p.push(f.deal==='rent'?'להשכרה':'למכירה');p.push(f.city||(f.region?regionLabel(f.region):'כל הארץ'));if(f.rooms)p.push(f.rooms+'+ חד׳');
   if(f.max)p.push('עד ₪'+fmt(f.max));if(f.owner==='private')p.push('ללא תיווך');if(f.feats?.length)p.push(f.feats.join(', '));return p.join(' · ');}
 const newFor=s=>listings.filter(l=>l.created>s.seen&&!mine.has(l.id)&&matchF(l,{...EMPTY_F,...s.f})).length;
 $('#fSave').onclick=()=>{
@@ -1146,7 +1147,7 @@ async function publish(){
     const where=await store.put(l,wiz.file);
     mine.add(l.id);LS.set('mine',[...mine]);setMe({name:me.name||l.name,phone:me.phone||l.phone});
     resetWizard();await load();filters={...EMPTY_F};LS.set('filters',filters);go('feed');renderFeed();$('#feed').scrollTop=0;
-    toast(where==='mem'?'הדירה פורסמה (שמורה עד סגירת הדף)':'הדירה באוויר!');
+    toast(where==='mem'?'המודעה פורסמה · זמינה עד סגירת הדף':'המודעה פורסמה');
   }catch(e){err.textContent='הפרסום נכשל: '+(e&&e.message||e);btn.textContent='פרסום הדירה';}
   finally{btn.disabled=false;}
 }
@@ -1171,7 +1172,7 @@ function attachAC(inp,opt={}){
     for(const c of ALL_CITIES){const sc=score(c,q);if(sc>=0)items.push({v:c,s:sc});}
     items.sort((a,b)=>a.s-b.s||a.v.localeCompare(b.v,'he'));items=items.slice(0,8);
     if(!items.length||(items.length===1&&normHe(items[0].v)===q)){hide();return;}
-    box.innerHTML=items.map(i=>i.r?`<button type="button" class="rg" data-r="${esc(i.v)}"><span>📍 כל אזור ${esc(i.v)}</span><small>${REGIONS[i.v].length} ערים</small></button>`
+    box.innerHTML=items.map(i=>i.r?`<button type="button" class="rg" data-r="${esc(i.v)}"><span>כל ${regionLabel(i.v)}</span><small>${REGIONS[i.v].length} ערים</small></button>`
       :`<button type="button" data-c="${esc(i.v)}"><span>${esc(i.v)}</span><small>${esc(CITY_REGION[i.v])}</small></button>`).join('');
     box.classList.remove('hidden');
   };
