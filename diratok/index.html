@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-<title>דירהטוק</title>
+<title>Doora</title>
 <style>
   :root{
     --bg:#0d0c0b; --surface:#171513; --surface-2:#211e1b; --line:rgba(245,239,230,.10); --line-2:rgba(245,239,230,.18);
@@ -44,8 +44,9 @@
                linear-gradient(to bottom,rgba(8,7,6,.55) 0%,rgba(8,7,6,0) 16%)}
 
   .topbar{position:absolute;top:0;left:0;right:0;z-index:6;padding:calc(8px + var(--safe-t)) 12px 8px;
-    display:grid;grid-template-columns:44px 1fr 44px;align-items:center;pointer-events:none}
+    display:grid;grid-template-columns:64px 1fr 64px;align-items:center;pointer-events:none}
   .topbar>*{pointer-events:auto}
+  .topbar .iconbtn{justify-self:end}
   .tabs{display:flex;justify-content:center;gap:20px}
   .tabs button{font-size:16px;font-weight:600;color:var(--muted);padding:6px 0;position:relative;text-shadow:0 1px 4px rgba(0,0,0,.5)}
   .tabs button.on{color:var(--ink);font-weight:800}
@@ -318,7 +319,11 @@
 
   /* ================= ONBOARDING ================= */
   .onb{position:absolute;inset:0;z-index:50;background:var(--bg);display:flex;flex-direction:column;padding:calc(30px + var(--safe-t)) 26px calc(26px + var(--safe-b))}
-  .onb .mark{width:64px;height:64px;color:var(--brand)}
+  .onb .brand{display:flex;align-items:center;gap:12px;direction:ltr;justify-content:flex-end}
+  .onb .mark{width:52px;height:52px;color:var(--brand)}
+  .wordmark{font-size:40px;font-weight:900;letter-spacing:-2px;line-height:1}
+  .wordmark.sm{font-size:19px;letter-spacing:-.8px;direction:ltr;text-shadow:0 1px 6px rgba(0,0,0,.5)}
+  .wordmark i{font-style:normal;color:var(--brand)}
   .onb h1{font-size:34px;line-height:1.1;font-weight:900;letter-spacing:-1px;margin:26px 0 10px}
   .onb h1 em{font-style:normal;color:var(--brand)}
   .onb p.lead{font-size:17px;color:var(--muted);line-height:1.55;margin:0 0 28px}
@@ -342,7 +347,7 @@
 <!-- ============ FEED ============ -->
 <section id="scr-feed" class="screen">
   <div class="topbar">
-    <span></span>
+    <span class="wordmark sm">doora<i>.</i></span>
     <div class="tabs" id="dealTabs">
       <button data-v="sale">למכירה</button>
       <button data-v="rent">להשכרה</button>
@@ -485,7 +490,7 @@
 
 <!-- ============ ONBOARDING ============ -->
 <div class="onb hidden" id="onb">
-  <svg class="mark" viewBox="0 0 64 64" fill="none"><path d="M8 29L32 9l24 20v24a3 3 0 01-3 3H11a3 3 0 01-3-3z" fill="currentColor"/><path d="M27 26v18l15-9z" fill="#fff"/></svg>
+  <div class="brand"><svg class="mark" viewBox="0 0 64 64" fill="none"><path d="M8 29L32 9l24 20v24a3 3 0 01-3 3H11a3 3 0 01-3-3z" fill="currentColor"/><path d="M27 26v18l15-9z" fill="#fff"/></svg><span class="wordmark">doora<i>.</i></span></div>
   <h1>דירות, כמו<br>שהן <em>באמת</em>.</h1>
   <p class="lead">בלי תמונות מטעות וזוויות רחבות. סיור וידאו קצר בכל דירה — וגוללים לבאה.</p>
   <div class="pts">
@@ -605,8 +610,8 @@ const dealLabel=l=>l.deal==='sale'?'למכירה':'להשכרה';
 const priceHTML=l=>`₪${fmt(l.price)}${l.deal==='rent'?'<small>לחודש</small>':''}`;
 const phoneIntl=p=>{p=String(p).replace(/[^\d+]/g,'');if(p.startsWith('0'))p='972'+p.slice(1);return p.replace('+','');};
 const wa=(l,txt)=>`https://wa.me/${phoneIntl(l.phone)}?text=${encodeURIComponent(txt)}`;
-const waAsk=l=>wa(l,`היי ${l.name}, ראיתי בדירהטוק את הדירה ב${l.city}${l.area?' ('+l.area+')':''} — ${l.rooms} חד׳, ₪${fmt(l.price)}. היא עדיין רלוונטית?`);
-const waVisit=l=>wa(l,`היי ${l.name}, ראיתי בדירהטוק את הדירה ב${l.city}${l.area?' ('+l.area+')':''} ואשמח לתאם ביקור. מתי נוח לך?`);
+const waAsk=l=>wa(l,`היי ${l.name}, ראיתי ב־Doora את הדירה ב${l.city}${l.area?' ('+l.area+')':''} — ${l.rooms} חד׳, ₪${fmt(l.price)}. היא עדיין רלוונטית?`);
+const waVisit=l=>wa(l,`היי ${l.name}, ראיתי ב־Doora את הדירה ב${l.city}${l.area?' ('+l.area+')':''} ואשמח לתאם ביקור. מתי נוח לך?`);
 const loc=l=>`${esc(l.city)}${l.area?' · '+esc(l.area):''}`;
 
 /* ---------- navigation ---------- */
@@ -744,8 +749,8 @@ function wireCard(c,l,ch){
   c.querySelector('.share').onclick=()=>share(l);
 }
 async function share(l){
-  const text=`${dealLabel(l)}: ${l.rooms} חד׳ ב${l.city}${l.area?', '+l.area:''} — ₪${fmt(l.price)} | דירהטוק`;
-  try{if(navigator.share){await navigator.share({title:'דירהטוק',text});return;}}catch{return;}
+  const text=`${dealLabel(l)}: ${l.rooms} חד׳ ב${l.city}${l.area?', '+l.area:''} — ₪${fmt(l.price)} | Doora`;
+  try{if(navigator.share){await navigator.share({title:'Doora',text});return;}}catch{return;}
   try{await navigator.clipboard.writeText(text);toast('הפרטים הועתקו');}catch{toast(text);}
 }
 async function doLike(c,l,dbl){
@@ -857,7 +862,7 @@ function renderMine(){
   const trialEnd=me.planStart?new Date(me.planStart+30*864e5).toLocaleDateString('he-IL'):'';
   $('#minePromo').innerHTML=me.role==='agent'&&plan
     ?promoHTML('plans',I.brief,`מסלול ${plan.name} · ₪${plan.price} לחודש`,`ניסיון חינם עד ${trialEnd}.${boostsLeft()?` נשארו ${boostsLeft()} קידומים חינם החודש.`:''} לחצו לשינוי מסלול.`,true)
-    :promoHTML('plans',I.brief,'אתם מתווכים?','הצטרפו לדירהטוק לעסקים — תג מאומת, סטטיסטיקה לפי חדר וקידומים. 30 יום חינם.');
+    :promoHTML('plans',I.brief,'אתם מתווכים?','הצטרפו ל־Doora Business — תג מאומת, סטטיסטיקה לפי חדר וקידומים. 30 יום חינם.');
   $('#minePromo [data-act]').onclick=openPlans;
   const g=$('#mineGrid');
   if(!my.length){g.innerHTML=`<div class="empty" style="height:auto;padding:30px 10px"><p>עוד לא פרסמתם דירה. העלו סיור וידאו קצר והדירה תופיע בפיד.</p><button class="btn" data-up>העלאת דירה</button></div>`;
@@ -935,7 +940,7 @@ function openAgent(k){
       <div><h2 style="display:flex;gap:6px;align-items:center">${esc(a.name)}${a.verified?TICK:''}</h2><div class="role">${esc(a.agency||'מתווך/ת עצמאי/ת')}${a.verified?' · מתווך/ת מאומת/ת':''}</div></div></div>
     <div class="kv num"><div><b>${a.items.length}</b><span>נכסים</span></div><div><b>${fmt(a.likes)}</b><span>לייקים</span></div><div><b>${a.cities.size||'—'}</b><span>ערים</span></div></div>
     ${a.cities.size?`<div class="chips" style="margin-bottom:6px">${[...a.cities].map(c=>`<span class="chip">${esc(c)}</span>`).join('')}</div>`:''}
-    <div class="btns"><a class="btn wa" href="${wa(a,`היי ${a.name}, הגעתי אליך דרך דירהטוק. אני מחפש/ת דירה ואשמח לעזרה.`)}" target="_blank" rel="noopener">${I.wa}הודעה</a><a class="btn ghost" href="tel:${esc(String(a.phone).replace(/[^\d+]/g,''))}" aria-label="חיוג">${I.phone}</a></div>
+    <div class="btns"><a class="btn wa" href="${wa(a,`היי ${a.name}, הגעתי אליך דרך Doora. אני מחפש/ת דירה ואשמח לעזרה.`)}" target="_blank" rel="noopener">${I.wa}הודעה</a><a class="btn ghost" href="tel:${esc(String(a.phone).replace(/[^\d+]/g,''))}" aria-label="חיוג">${I.phone}</a></div>
     <div class="sec">הנכסים של ${esc(a.name)}</div><div id="agGrid"></div>`;
   if(a.items.length)renderGrid('#agGrid',a.items,false);else $('#agGrid').innerHTML='<p class="hint">עוד אין נכסים מפורסמים.</p>';
   openSheet('#genSheet');
@@ -944,7 +949,7 @@ function openAgent(k){
 /* ----- agent plans (subscription) ----- */
 function openPlans(){
   const me=getMe();
-  $('#genBody').innerHTML=`<div class="eyebrow">דירהטוק לעסקים</div><h2>${me.role==='agent'?'המסלול שלי':'הצטרפות כמתווך'}</h2>
+  $('#genBody').innerHTML=`<div class="eyebrow">Doora Business</div><h2>${me.role==='agent'?'המסלול שלי':'הצטרפות כמתווך'}</h2>
     <p class="hint" style="margin:6px 0 16px">30 הימים הראשונים בחינם — בלי התחייבות ובלי אמצעי תשלום.</p>
     <div class="row"><div class="field"><label>שם מלא</label><input id="pName" value="${esc(me.name||'')}"></div><div class="field"><label>טלפון</label><input id="pPhone" type="tel" inputmode="tel" value="${esc(me.phone||'')}"></div></div>
     <div class="row"><div class="field"><label>משרד / סוכנות</label><input id="pAgency" value="${esc(me.agency||'')}" placeholder="עצמאי/ת"></div><div class="field"><label>אזורי פעילות</label><input id="pCities" value="${esc(me.cities||'')}" placeholder="תל אביב, רמת גן"></div></div>
@@ -1006,7 +1011,7 @@ function openStats(l){
 /* ----- service leads (photo shoot, mortgage, movers, developers...) ----- */
 function openLead(type,l){
   const t=LEADS[type],me=getMe();if(!t)return;
-  $('#genBody').innerHTML=`<div class="eyebrow">${type==='developer'||type==='shoot'?'דירהטוק לעסקים':'שירותים'}</div><h2>${t.title}</h2>
+  $('#genBody').innerHTML=`<div class="eyebrow">${type==='developer'||type==='shoot'?'Doora Business':'שירותים'}</div><h2>${t.title}</h2>
     <p class="hint" style="margin:6px 0 16px">${t.sub}${t.price?` <b style="color:var(--ink)">${t.price}</b>`:''}</p>
     <div class="row"><div class="field"><label>שם</label><input id="ldName" value="${esc(me.name||'')}"></div><div class="field"><label>טלפון</label><input id="ldPhone" type="tel" inputmode="tel" value="${esc(me.phone||'')}"></div></div>
     ${t.extra.map(([k,lab])=>`<div class="field"><label>${lab}</label><input data-k="${k}" value="${k==='addr'&&l?esc(l.city+(l.area?', '+l.area:'')):''}"></div>`).join('')}
@@ -1023,7 +1028,7 @@ function openLead(type,l){
     if(!getMe().name)setMe({name,phone});
     closeSheets();toast('הבקשה נקלטה — ניצור קשר בהקדם');
     if(BUSINESS_WHATSAPP){
-      const txt=[`ליד חדש מדירהטוק: ${t.title}`,`שם: ${name}`,`טלפון: ${phone}`,...t.extra.map(([k,lab])=>lead[k]?`${lab}: ${lead[k]}`:''),
+      const txt=[`ליד חדש מ־Doora: ${t.title}`,`שם: ${name}`,`טלפון: ${phone}`,...t.extra.map(([k,lab])=>lead[k]?`${lab}: ${lead[k]}`:''),
         l?`נכס: ${l.rooms} חד׳ ב${l.city}, ₪${fmt(l.price)}`:'',lead.note?`הערות: ${lead.note}`:''].filter(Boolean).join('\n');
       window.open(`https://wa.me/${BUSINESS_WHATSAPP}?text=${encodeURIComponent(txt)}`,'_blank');
     }
